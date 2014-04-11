@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-type dbType string
+type DbType string
 
 type Uri struct {
-	DbType  dbType
+	DbType  DbType
 	Proto   string
 	Host    string
 	Port    string
@@ -26,7 +26,7 @@ type Uri struct {
 type Dialect interface {
 	Init(*Uri, string, string) error
 	URI() *Uri
-	DBType() dbType
+	DBType() DbType
 	SqlType(t *Column) string
 	SupportInsertMany() bool
 	QuoteStr() string
@@ -70,7 +70,7 @@ func (b *Base) URI() *Uri {
 	return b.Uri
 }
 
-func (b *Base) DBType() dbType {
+func (b *Base) DBType() DbType {
 	return b.Uri.DbType
 }
 
@@ -137,19 +137,16 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 }
 
 var (
-	dialects = map[dbType]Dialect{}
+	dialects = map[DbType]Dialect{}
 )
 
-func RegisterDialect(dbName dbType, dialect Dialect) {
+func RegisterDialect(dbName DbType, dialect Dialect) {
 	if dialect == nil {
 		panic("core: Register dialect is nil")
 	}
-	if _, dup := dialects[dbName]; dup {
-		panic("core: Register called twice for dialect " + dbName)
-	}
-	dialects[dbName] = dialect
+	dialects[dbName] = dialect // !nashtsai! allow override dialect
 }
 
-func QueryDialect(dbName dbType) Dialect {
+func QueryDialect(dbName DbType) Dialect {
 	return dialects[dbName]
 }
