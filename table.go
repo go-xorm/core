@@ -17,6 +17,7 @@ type Table struct {
 	Created       map[string]bool
 	Updated       string
 	Version       string
+	Cacher        Cacher
 }
 
 func (table *Table) Columns() map[string]*Column {

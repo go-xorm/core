@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -29,6 +30,8 @@ type Dialect interface {
 	SqlType(t *Column) string
 	SupportInsertMany() bool
 	QuoteStr() string
+	RollBackStr() string
+	DropTableSql(tableName string) string
 	AutoIncrStr() string
 	SupportEngine() bool
 	SupportCharset() bool
@@ -81,6 +84,14 @@ func (b *Base) DataSourceName() string {
 
 func (b *Base) Quote(c string) string {
 	return b.dialect.QuoteStr() + c + b.dialect.QuoteStr()
+}
+
+func (db *Base) RollBackStr() string {
+	return "ROLL BACK"
+}
+
+func (db *Base) DropTableSql(tableName string) string {
+	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
 
 func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {

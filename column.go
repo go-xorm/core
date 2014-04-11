@@ -30,11 +30,12 @@ type Column struct {
 	IsCascade       bool
 	IsVersion       bool
 	fieldPath       []string
+	DefaultIsEmpty  bool
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
 	return &Column{name, fieldName, sqlType, len1, len2, nullable, "", make(map[string]bool), false, false,
-		TWOSIDES, false, false, false, false, nil}
+		TWOSIDES, false, false, false, false, nil, false}
 }
 
 // generate column description string according dialect
