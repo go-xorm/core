@@ -1,6 +1,9 @@
 package core
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Filter is an interface to filter SQL
 type Filter interface {
@@ -39,4 +42,23 @@ func (i *IdFilter) Do(sql string, dialect Dialect, table *Table) string {
 		return strings.Replace(sql, "(id)", quoter.Quote(table.PrimaryKeys[0]), -1)
 	}
 	return sql
+}
+
+// SeqFilter filter SQL replace ?, ? ... to $1, $2 ...
+type SeqFilter struct {
+	Prefix string
+	Start  int
+}
+
+func (s *SeqFilter) Do(sql string, dialect Dialect, table *Table) string {
+	segs := strings.Split(sql, "?")
+	size := len(segs)
+	res := ""
+	for i, c := range segs {
+		if i < size-1 {
+			res += c + fmt.Sprintf("%s%v", s.Prefix, i+s.Start)
+		}
+	}
+	res += segs[size-1]
+	return res
 }
