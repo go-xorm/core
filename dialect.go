@@ -30,12 +30,15 @@ type Dialect interface {
 	SqlType(t *Column) string
 	SupportInsertMany() bool
 	QuoteStr() string
+	AndStr() string
+	EqStr() string
 	RollBackStr() string
 	DropTableSql(tableName string) string
 	AutoIncrStr() string
 	SupportEngine() bool
 	SupportCharset() bool
 	IndexOnTable() bool
+	ShowCreateNull() bool
 
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
@@ -78,12 +81,24 @@ func (b *Base) DriverName() string {
 	return b.driverName
 }
 
+func (b *Base) ShowCreateNull() bool {
+	return true
+}
+
 func (b *Base) DataSourceName() string {
 	return b.dataSourceName
 }
 
 func (b *Base) Quote(c string) string {
 	return b.dialect.QuoteStr() + c + b.dialect.QuoteStr()
+}
+
+func (b *Base) AndStr() string {
+	return "AND"
+}
+
+func (b *Base) EqStr() string {
+	return "="
 }
 
 func (db *Base) RollBackStr() string {

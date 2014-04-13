@@ -51,10 +51,12 @@ func (col *Column) String(d Dialect) string {
 		}
 	}
 
-	if col.Nullable {
-		sql += "NULL "
-	} else {
-		sql += "NOT NULL "
+	if d.ShowCreateNull() {
+		if col.Nullable {
+			sql += "NULL "
+		} else {
+			sql += "NOT NULL "
+		}
 	}
 
 	if col.Default != "" {
@@ -69,10 +71,12 @@ func (col *Column) StringNoPk(d Dialect) string {
 
 	sql += d.SqlType(col) + " "
 
-	if col.Nullable {
-		sql += "NULL "
-	} else {
-		sql += "NOT NULL "
+	if d.ShowCreateNull() {
+		if col.Nullable {
+			sql += "NULL "
+		} else {
+			sql += "NOT NULL "
+		}
 	}
 
 	if col.Default != "" {
