@@ -1,14 +1,14 @@
 package core
 
-type driver interface {
+type Driver interface {
 	Parse(string, string) (*Uri, error)
 }
 
 var (
-	drivers = map[string]driver{}
+	drivers = map[string]Driver{}
 )
 
-func RegisterDriver(driverName string, driver driver) {
+func RegisterDriver(driverName string, driver Driver) {
 	if driver == nil {
 		panic("core: Register driver is nil")
 	}
@@ -18,6 +18,6 @@ func RegisterDriver(driverName string, driver driver) {
 	drivers[driverName] = driver
 }
 
-func QueryDriver(driverName string) driver {
+func QueryDriver(driverName string) Driver {
 	return drivers[driverName]
 }
