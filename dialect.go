@@ -55,6 +55,10 @@ type Dialect interface {
 	DataSourceName() string
 }
 
+func OpenDialect(dialect Dialect) (*DB, error) {
+	return Open(dialect.DriverName(), dialect.DataSourceName())
+}
+
 type Base struct {
 	dialect        Dialect
 	driverName     string
