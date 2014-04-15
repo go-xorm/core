@@ -21,3 +21,7 @@ func RegisterDriver(driverName string, driver Driver) {
 func QueryDriver(driverName string) Driver {
 	return drivers[driverName]
 }
+
+func RegisteredDriverSize() int {
+	return len(drivers)
+}
