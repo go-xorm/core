@@ -27,28 +27,32 @@ type Dialect interface {
 	Init(*Uri, string, string) error
 	URI() *Uri
 	DBType() DbType
-	SqlType(t *Column) string
-	SupportInsertMany() bool
+	SqlType(*Column) string
+
 	QuoteStr() string
 	AndStr() string
+	OrStr() string
 	EqStr() string
 	RollBackStr() string
-	DropTableSql(tableName string) string
 	AutoIncrStr() string
+
+	SupportInsertMany() bool
 	SupportEngine() bool
 	SupportCharset() bool
 	IndexOnTable() bool
 	ShowCreateNull() bool
 
+	DropTableSql(tableName string) string
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
 	ColumnCheckSql(tableName, colName string) (string, []interface{})
+	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
+	CreateIndexSql(tableName string, index *Index) string
 
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
 	GetIndexes(tableName string) (map[string]*Index, error)
 
-	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	Filters() []Filter
 
 	DriverName() string
@@ -101,6 +105,10 @@ func (b *Base) AndStr() string {
 	return "AND"
 }
 
+func (b *Base) OrStr() string {
+	return "OR"
+}
+
 func (b *Base) EqStr() string {
 	return "="
 }
@@ -111,6 +119,21 @@ func (db *Base) RollBackStr() string {
 
 func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+}
+
+func (db *Base) CreateIndexSql(tableName string, index *Index) string {
+	quote := db.Quote
+	var unique string
+	var idxName string
+	if index.Type == UniqueType {
+		unique = " UNIQUE"
+		idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+	} else {
+		idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+	}
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
+		quote(idxName), quote(tableName),
+		quote(strings.Join(index.Cols, quote(","))))
 }
 
 func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
