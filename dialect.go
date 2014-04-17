@@ -146,10 +146,12 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		sql += " ENGINE=" + storeEngine
 	}
 	if b.dialect.SupportCharset() {
-		if charset == "" {
+		if len(charset) == 0 {
 			charset = b.dialect.URI().Charset
 		}
-		sql += " DEFAULT CHARSET " + charset
+		if len(charset) > 0 {
+			sql += " DEFAULT CHARSET " + charset
+		}
 	}
 	sql += ";"
 	return sql
