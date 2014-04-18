@@ -24,8 +24,9 @@ type Uri struct {
 
 // a dialect is a driver's wrapper
 type Dialect interface {
-	Init(*Uri, string, string) error
+	Init(*DB, *Uri, string, string) error
 	URI() *Uri
+	DB() *DB
 	DBType() DbType
 	SqlType(*Column) string
 
@@ -64,16 +65,20 @@ func OpenDialect(dialect Dialect) (*DB, error) {
 }
 
 type Base struct {
+	db             *DB
 	dialect        Dialect
 	driverName     string
 	dataSourceName string
 	*Uri
 }
 
-func (b *Base) Init(dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
-	b.dialect = dialect
+func (b *Base) DB() *DB {
+	return b.db
+}
+
+func (b *Base) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
+	b.db, b.dialect, b.Uri = db, dialect, uri
 	b.driverName, b.dataSourceName = drivername, dataSourceName
-	b.Uri = uri
 	return nil
 }
 
