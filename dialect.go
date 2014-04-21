@@ -46,7 +46,7 @@ type Dialect interface {
 	DropTableSql(tableName string) string
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
-	ColumnCheckSql(tableName, colName string) (string, []interface{})
+	ColumnCheckSql(tableName, colName string, isPK bool) (string, []interface{})
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	CreateIndexSql(tableName string, index *Index) string
 
