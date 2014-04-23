@@ -20,7 +20,7 @@ const (
 
 // CacheStore is a interface to store cache
 type CacheStore interface {
-	// key is primary key or composite primary key or unique key's value
+	// key is primary key or composite primary key
 	// value is struct's pointer
 	// key format : <tablename>-p-<pk1>-<pk2>...
 	Put(key string, value interface{}) error

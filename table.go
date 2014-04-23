@@ -18,6 +18,8 @@ type Table struct {
 	Updated       string
 	Version       string
 	Cacher        Cacher
+	storeEngine   string
+	charset       string
 }
 
 func (table *Table) Columns() map[string]*Column {

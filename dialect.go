@@ -30,6 +30,9 @@ type Dialect interface {
 	DBType() DbType
 	SqlType(*Column) string
 
+	DriverName() string
+	DataSourceName() string
+
 	QuoteStr() string
 	AndStr() string
 	OrStr() string
@@ -43,21 +46,28 @@ type Dialect interface {
 	IndexOnTable() bool
 	ShowCreateNull() bool
 
-	DropTableSql(tableName string) string
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
-	ColumnCheckSql(tableName, colName string, isPK bool) (string, []interface{})
+	//ColumnCheckSql(tableName, colName string) (string, []interface{})
+
+	//IsTableExist(tableName string) (bool, error)
+	//IsIndexExist(tableName string, idx *Index) (bool, error)
+	IsColumnExist(tableName string, col *Column) (bool, error)
+
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
+	DropTableSql(tableName string) string
 	CreateIndexSql(tableName string, index *Index) string
 
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
 	GetIndexes(tableName string) (map[string]*Index, error)
 
-	Filters() []Filter
+	// Get data from db cell to a struct's field
+	//GetData(col *Column, fieldValue *reflect.Value, cellData interface{}) error
+	// Set field data to db
+	//SetData(col *Column, fieldValue *refelct.Value) (interface{}, error)
 
-	DriverName() string
-	DataSourceName() string
+	Filters() []Filter
 }
 
 func OpenDialect(dialect Dialect) (*DB, error) {
@@ -124,6 +134,22 @@ func (db *Base) RollBackStr() string {
 
 func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+}
+
+func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
+	args := []interface{}{db.DbName, tableName, col.Name}
+	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
+
+	rows, err := db.DB().Query(query, args...)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return true, nil
+	}
+	return false, ErrNotExist
 }
 
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {

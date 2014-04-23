@@ -8,11 +8,6 @@ import (
 	"sync"
 )
 
-var (
-	ErrNoMapPointer    = errors.New("mp should be a map's pointer")
-	ErrNoStructPointer = errors.New("mp should be a map's pointer")
-)
-
 func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
 	vv := reflect.ValueOf(mp)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
@@ -252,7 +247,7 @@ type Rows struct {
 }
 
 // scan data to a struct's pointer according field index
-func (rs *Rows) ScanStruct(dest ...interface{}) error {
+func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 	if len(dest) == 0 {
 		return errors.New("at least one struct")
 	}
@@ -319,7 +314,7 @@ func fieldByName(v reflect.Value, name string) reflect.Value {
 }
 
 // scan data to a struct's pointer according field name
-func (rs *Rows) ScanStruct2(dest interface{}) error {
+func (rs *Rows) ScanStructByName(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
 		return errors.New("dest should be a struct's pointer")
