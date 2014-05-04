@@ -29,6 +29,7 @@ type Dialect interface {
 	DB() *DB
 	DBType() DbType
 	SqlType(*Column) string
+	FormatBytes(b []byte) string
 
 	QuoteStr() string
 	AndStr() string
@@ -88,6 +89,10 @@ func (b *Base) URI() *Uri {
 
 func (b *Base) DBType() DbType {
 	return b.Uri.DbType
+}
+
+func (b *Base) FormatBytes(bs []byte) string {
+	return fmt.Sprintf("0x%x", bs)
 }
 
 func (b *Base) DriverName() string {
