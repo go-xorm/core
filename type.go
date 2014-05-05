@@ -62,6 +62,7 @@ var (
 	Integer   = "INTEGER"
 	BigInt    = "BIGINT"
 
+	Enum       = "ENUM"
 	Char       = "CHAR"
 	Varchar    = "VARCHAR"
 	TinyText   = "TINYTEXT"
@@ -104,6 +105,7 @@ var (
 		Integer:   NUMERIC_TYPE,
 		BigInt:    NUMERIC_TYPE,
 
+		Enum:       TEXT_TYPE,
 		Char:       TEXT_TYPE,
 		Varchar:    TEXT_TYPE,
 		TinyText:   TEXT_TYPE,
@@ -293,7 +295,7 @@ func SQLType2Type(st SQLType) reflect.Type {
 		return reflect.TypeOf(float32(1))
 	case Double:
 		return reflect.TypeOf(float64(1))
-	case Char, Varchar, TinyText, Text, MediumText, LongText:
+	case Char, Varchar, TinyText, Text, MediumText, LongText, Enum:
 		return reflect.TypeOf("")
 	case TinyBlob, Blob, LongBlob, Bytea, Binary, MediumBlob, VarBinary:
 		return reflect.TypeOf([]byte{})

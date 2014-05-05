@@ -31,11 +31,30 @@ type Column struct {
 	IsVersion       bool
 	fieldPath       []string
 	DefaultIsEmpty  bool
+	EnumOptions     map[string]int
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
-	return &Column{name, fieldName, sqlType, len1, len2, nullable, "", make(map[string]bool), false, false,
-		TWOSIDES, false, false, false, false, nil, false}
+	return &Column{
+		Name:            name,
+		FieldName:       fieldName,
+		SQLType:         sqlType,
+		Length:          len1,
+		Length2:         len2,
+		Nullable:        nullable,
+		Default:         "",
+		Indexes:         make(map[string]bool),
+		IsPrimaryKey:    false,
+		IsAutoIncrement: false,
+		MapType:         TWOSIDES,
+		IsCreated:       false,
+		IsUpdated:       false,
+		IsCascade:       false,
+		IsVersion:       false,
+		fieldPath:       nil,
+		DefaultIsEmpty:  false,
+		EnumOptions:     make(map[string]int),
+	}
 }
 
 // generate column description string according dialect
