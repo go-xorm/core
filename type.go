@@ -22,15 +22,35 @@ type SQLType struct {
 	DefaultLength2 int
 }
 
+const (
+	UNKNOW_TYPE = iota
+	TEXT_TYPE
+	BLOB_TYPE
+	TIME_TYPE
+	NUMERIC_TYPE
+)
+
+func (s *SQLType) IsType(st int) bool {
+	if t, ok := SqlTypes[s.Name]; ok && t == st {
+		return true
+	}
+	return false
+}
+
 func (s *SQLType) IsText() bool {
-	return s.Name == Char || s.Name == Varchar || s.Name == TinyText ||
-		s.Name == Text || s.Name == MediumText || s.Name == LongText
+	return s.IsType(TEXT_TYPE)
 }
 
 func (s *SQLType) IsBlob() bool {
-	return (s.Name == TinyBlob) || (s.Name == Blob) ||
-		s.Name == MediumBlob || s.Name == LongBlob ||
-		s.Name == Binary || s.Name == VarBinary || s.Name == Bytea
+	return s.IsType(BLOB_TYPE)
+}
+
+func (s *SQLType) IsTime() bool {
+	return s.IsType(TIME_TYPE)
+}
+
+func (s *SQLType) IsNumeric() bool {
+	return s.IsType(NUMERIC_TYPE)
 }
 
 var (
@@ -42,6 +62,7 @@ var (
 	Integer   = "INTEGER"
 	BigInt    = "BIGINT"
 
+	Enum       = "ENUM"
 	Char       = "CHAR"
 	Varchar    = "VARCHAR"
 	TinyText   = "TINYTEXT"
@@ -75,46 +96,48 @@ var (
 	Serial    = "SERIAL"
 	BigSerial = "BIGSERIAL"
 
-	SqlTypes = map[string]bool{
-		Bit:       true,
-		TinyInt:   true,
-		SmallInt:  true,
-		MediumInt: true,
-		Int:       true,
-		Integer:   true,
-		BigInt:    true,
+	SqlTypes = map[string]int{
+		Bit:       NUMERIC_TYPE,
+		TinyInt:   NUMERIC_TYPE,
+		SmallInt:  NUMERIC_TYPE,
+		MediumInt: NUMERIC_TYPE,
+		Int:       NUMERIC_TYPE,
+		Integer:   NUMERIC_TYPE,
+		BigInt:    NUMERIC_TYPE,
 
-		Char:       true,
-		Varchar:    true,
-		TinyText:   true,
-		Text:       true,
-		MediumText: true,
-		LongText:   true,
+		Enum:       TEXT_TYPE,
+		Char:       TEXT_TYPE,
+		Varchar:    TEXT_TYPE,
+		TinyText:   TEXT_TYPE,
+		Text:       TEXT_TYPE,
+		MediumText: TEXT_TYPE,
+		LongText:   TEXT_TYPE,
 
-		Date:       true,
-		DateTime:   true,
-		Time:       true,
-		TimeStamp:  true,
-		TimeStampz: true,
+		Date:       TIME_TYPE,
+		DateTime:   TIME_TYPE,
+		Time:       TIME_TYPE,
+		TimeStamp:  TIME_TYPE,
+		TimeStampz: TIME_TYPE,
 
-		Decimal: true,
-		Numeric: true,
+		Decimal: NUMERIC_TYPE,
+		Numeric: NUMERIC_TYPE,
+		Real:    NUMERIC_TYPE,
+		Float:   NUMERIC_TYPE,
+		Double:  NUMERIC_TYPE,
 
-		Binary:     true,
-		VarBinary:  true,
-		Real:       true,
-		Float:      true,
-		Double:     true,
-		TinyBlob:   true,
-		Blob:       true,
-		MediumBlob: true,
-		LongBlob:   true,
-		Bytea:      true,
+		Binary:    BLOB_TYPE,
+		VarBinary: BLOB_TYPE,
 
-		Bool: true,
+		TinyBlob:   BLOB_TYPE,
+		Blob:       BLOB_TYPE,
+		MediumBlob: BLOB_TYPE,
+		LongBlob:   BLOB_TYPE,
+		Bytea:      BLOB_TYPE,
 
-		Serial:    true,
-		BigSerial: true,
+		Bool: NUMERIC_TYPE,
+
+		Serial:    NUMERIC_TYPE,
+		BigSerial: NUMERIC_TYPE,
 	}
 
 	intTypes  = sort.StringSlice{"*int", "*int16", "*int32", "*int8"}
@@ -272,7 +295,7 @@ func SQLType2Type(st SQLType) reflect.Type {
 		return reflect.TypeOf(float32(1))
 	case Double:
 		return reflect.TypeOf(float64(1))
-	case Char, Varchar, TinyText, Text, MediumText, LongText:
+	case Char, Varchar, TinyText, Text, MediumText, LongText, Enum:
 		return reflect.TypeOf("")
 	case TinyBlob, Blob, LongBlob, Bytea, Binary, MediumBlob, VarBinary:
 		return reflect.TypeOf([]byte{})
