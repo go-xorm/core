@@ -141,10 +141,7 @@ func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
 
-func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
-	args := []interface{}{db.DbName, tableName, col.Name}
-	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
-
+func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	rows, err := db.DB().Query(query, args...)
 	if err != nil {
 		return false, err
@@ -155,6 +152,12 @@ func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
+	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
+	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
+	return db.HasRecords(query, db.DbName, tableName, col.Name)
 }
 
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {
