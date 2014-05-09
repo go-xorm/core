@@ -154,7 +154,7 @@ func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
 	if rows.Next() {
 		return true, nil
 	}
-	return false, ErrNotExist
+	return false, nil
 }
 
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {
