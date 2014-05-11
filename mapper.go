@@ -164,11 +164,11 @@ type SuffixMapper struct {
 }
 
 func (mapper SuffixMapper) Obj2Table(name string) string {
-	return mapper.Suffix + mapper.Mapper.Obj2Table(name)
+	return mapper.Mapper.Obj2Table(name) + mapper.Suffix
 }
 
 func (mapper SuffixMapper) Table2Obj(name string) string {
-	return mapper.Mapper.Table2Obj(name[len(mapper.Suffix):])
+	return mapper.Mapper.Table2Obj(name[:len(name)-len(mapper.Suffix)])
 }
 
 func NewSuffixMapper(mapper IMapper, suffix string) SuffixMapper {
