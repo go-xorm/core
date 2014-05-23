@@ -10,7 +10,8 @@ type Table struct {
 	Name          string
 	Type          reflect.Type
 	columnsSeq    []string
-	columns       map[string]*Column
+	columnsMap    map[string][]*Column
+	columns       []*Column
 	Indexes       map[string]*Index
 	PrimaryKeys   []string
 	AutoIncrement string
@@ -22,7 +23,7 @@ type Table struct {
 	charset       string
 }
 
-func (table *Table) Columns() map[string]*Column {
+func (table *Table) Columns() []*Column {
 	return table.columns
 }
 
@@ -31,18 +32,14 @@ func (table *Table) ColumnsSeq() []string {
 }
 
 func NewEmptyTable() *Table {
-	return &Table{columnsSeq: make([]string, 0),
-		columns:     make(map[string]*Column),
-		Indexes:     make(map[string]*Index),
-		Created:     make(map[string]bool),
-		PrimaryKeys: make([]string, 0),
-	}
+	return NewTable("", nil)
 }
 
 func NewTable(name string, t reflect.Type) *Table {
 	return &Table{Name: name, Type: t,
 		columnsSeq:  make([]string, 0),
-		columns:     make(map[string]*Column),
+		columns:     make([]*Column, 0),
+		columnsMap:  make(map[string][]*Column),
 		Indexes:     make(map[string]*Index),
 		Created:     make(map[string]bool),
 		PrimaryKeys: make([]string, 0),
@@ -50,7 +47,19 @@ func NewTable(name string, t reflect.Type) *Table {
 }
 
 func (table *Table) GetColumn(name string) *Column {
-	return table.columns[strings.ToLower(name)]
+	if c, ok := table.columnsMap[strings.ToLower(name)]; ok {
+		return c[0]
+	}
+	return nil
+}
+
+func (table *Table) GetColumnIdx(name string, idx int) *Column {
+	if c, ok := table.columnsMap[strings.ToLower(name)]; ok {
+		if idx < len(c) {
+			return c[idx]
+		}
+	}
+	return nil
 }
 
 // if has primary key, return column
@@ -70,10 +79,21 @@ func (table *Table) VersionColumn() *Column {
 	return table.GetColumn(table.Version)
 }
 
+func (table *Table) UpdatedColumn() *Column {
+	return table.GetColumn(table.Updated)
+}
+
 // add a column to table
 func (table *Table) AddColumn(col *Column) {
 	table.columnsSeq = append(table.columnsSeq, col.Name)
-	table.columns[strings.ToLower(col.Name)] = col
+	table.columns = append(table.columns, col)
+	colName := strings.ToLower(col.Name)
+	if c, ok := table.columnsMap[colName]; ok {
+		table.columnsMap[colName] = append(c, col)
+	} else {
+		table.columnsMap[colName] = []*Column{col}
+	}
+
 	if col.IsPrimaryKey {
 		table.PrimaryKeys = append(table.PrimaryKeys, col.Name)
 	}
