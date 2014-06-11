@@ -58,6 +58,9 @@ type Dialect interface {
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	DropTableSql(tableName string) string
 	CreateIndexSql(tableName string, index *Index) string
+	DropIndexSql(tableName string, index *Index) string
+
+	ModifyColumnSql(tableName string, col *Column) string
 
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
@@ -173,6 +176,26 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
+}
+
+func (db *Base) DropIndexSql(tableName string, index *Index) string {
+	quote := db.Quote
+	//var unique string
+	var idxName string = index.Name
+	if !strings.HasPrefix(idxName, "UQE_") &&
+		!strings.HasPrefix(idxName, "IDX_") {
+		if index.Type == UniqueType {
+			idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+		} else {
+			idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+		}
+	}
+	return fmt.Sprintf("DROP INDEX %v ON %s",
+		quote(idxName), quote(tableName))
+}
+
+func (db *Base) ModifyColumnSql(tableName string, col *Column) string {
+	return fmt.Sprintf("alter table %s MODIFY COLUMN %s", tableName, col.StringNoPk(db.dialect))
 }
 
 func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
