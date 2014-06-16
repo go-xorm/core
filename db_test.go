@@ -102,7 +102,7 @@ func BenchmarkStructQuery(b *testing.B) {
 
 		for rows.Next() {
 			var user User
-			err = rows.ScanStruct(&user)
+			err = rows.ScanStructByIndex(&user)
 			if err != nil {
 				b.Error(err)
 			}
@@ -148,7 +148,7 @@ func BenchmarkStruct2Query(b *testing.B) {
 
 		for rows.Next() {
 			var user User
-			err = rows.ScanStruct2(&user)
+			err = rows.ScanStructByName(&user)
 			if err != nil {
 				b.Error(err)
 			}
@@ -548,7 +548,7 @@ func TestExecMap(t *testing.T) {
 
 	for rows.Next() {
 		var user User
-		err = rows.ScanStruct2(&user)
+		err = rows.ScanStructByName(&user)
 		if err != nil {
 			t.Error(err)
 		}
@@ -591,7 +591,7 @@ func TestExecStruct(t *testing.T) {
 
 	for rows.Next() {
 		var user User
-		err = rows.ScanStruct2(&user)
+		err = rows.ScanStructByName(&user)
 		if err != nil {
 			t.Error(err)
 		}
