@@ -7,12 +7,14 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
-	createTableSqlite3 = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NULL, " +
-		"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
+	//dbtype         string = "sqlite3"
+	dbtype         string = "mysql"
+	createTableSql string
 )
 
 type User struct {
@@ -25,22 +27,46 @@ type User struct {
 	Created  time.Time
 }
 
+func init() {
+	switch dbtype {
+	case "sqlite3":
+		createTableSql = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NULL, " +
+			"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
+	case "mysql":
+		createTableSql = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `name` TEXT NULL, " +
+			"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
+	default:
+		panic("no db type")
+	}
+}
+
+func testOpen() (*DB, error) {
+	switch dbtype {
+	case "sqlite3":
+		os.Remove("./test.db")
+		return Open("sqlite3", "./test.db")
+	case "mysql":
+		return Open("mysql", "root:@/core_test?charset=utf8&parseTime=true")
+	default:
+		panic("no db type")
+	}
+}
+
 func BenchmarkOriQuery(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
 
 	for i := 0; i < 50; i++ {
-		_, err = db.Exec("insert into user (name, title, age, alias, nick_name, created) values (?,?,?,?,?, ?)",
+		_, err = db.Exec("insert into user (`name`, title, age, alias, nick_name, created) values (?,?,?,?,?, ?)",
 			"xlw", "tester", 1.2, "lunny", "lunny xiao", time.Now())
 		if err != nil {
 			b.Error(err)
@@ -72,20 +98,20 @@ func BenchmarkOriQuery(b *testing.B) {
 
 func BenchmarkStructQuery(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
 
 	for i := 0; i < 50; i++ {
-		_, err = db.Exec("insert into user (name, title, age, alias, nick_name, created) values (?,?,?,?,?, ?)",
+		_, err = db.Exec("insert into user (`name`, title, age, alias, nick_name, created) values (?,?,?,?,?, ?)",
 			"xlw", "tester", 1.2, "lunny", "lunny xiao", time.Now())
 		if err != nil {
 			b.Error(err)
@@ -117,20 +143,20 @@ func BenchmarkStructQuery(b *testing.B) {
 
 func BenchmarkStruct2Query(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
 
 	for i := 0; i < 50; i++ {
-		_, err = db.Exec("insert into user (name, title, age, alias, nick_name, created) values (?,?,?,?,?,?)",
+		_, err = db.Exec("insert into user (`name`, title, age, alias, nick_name, created) values (?,?,?,?,?,?)",
 			"xlw", "tester", 1.2, "lunny", "lunny xiao", time.Now())
 		if err != nil {
 			b.Error(err)
@@ -163,20 +189,20 @@ func BenchmarkStruct2Query(b *testing.B) {
 
 func BenchmarkSliceInterfaceQuery(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
 
 	for i := 0; i < 50; i++ {
-		_, err = db.Exec("insert into user (name, title, age, alias, nick_name,created) values (?,?,?,?,?,?)",
+		_, err = db.Exec("insert into user (`name`, title, age, alias, nick_name,created) values (?,?,?,?,?,?)",
 			"xlw", "tester", 1.2, "lunny", "lunny xiao", time.Now())
 		if err != nil {
 			b.Error(err)
@@ -221,7 +247,7 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -262,17 +288,17 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 		rows.Close()
 	}
 }
+*/
 
 func BenchmarkSliceStringQuery(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -299,12 +325,12 @@ func BenchmarkSliceStringQuery(b *testing.B) {
 		}
 
 		for rows.Next() {
-			slice := make([]string, len(cols))
+			slice := make([]*string, len(cols))
 			err = rows.ScanSlice(&slice)
 			if err != nil {
 				b.Error(err)
 			}
-			if slice[1] != "xlw" {
+			if (*slice[1]) != "xlw" {
 				fmt.Println(slice)
 				b.Error(errors.New("name should be xlw"))
 			}
@@ -312,18 +338,18 @@ func BenchmarkSliceStringQuery(b *testing.B) {
 
 		rows.Close()
 	}
-}*/
+}
 
 func BenchmarkMapInterfaceQuery(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -369,7 +395,7 @@ func BenchmarkMapInterfaceQuery(b *testing.B) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -405,7 +431,8 @@ func BenchmarkMapInterfaceQuery(b *testing.B) {
 		rows.Close()
 	}
 }
-
+*/
+/*
 func BenchmarkMapStringQuery(b *testing.B) {
 	b.StopTimer()
 	os.Remove("./test.db")
@@ -415,7 +442,7 @@ func BenchmarkMapStringQuery(b *testing.B) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -454,14 +481,14 @@ func BenchmarkMapStringQuery(b *testing.B) {
 
 func BenchmarkExec(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -469,7 +496,7 @@ func BenchmarkExec(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err = db.Exec("insert into user (name, title, age, alias, nick_name,created) values (?,?,?,?,?,?)",
+		_, err = db.Exec("insert into user (`name`, title, age, alias, nick_name,created) values (?,?,?,?,?,?)",
 			"xlw", "tester", 1.2, "lunny", "lunny xiao", time.Now())
 		if err != nil {
 			b.Error(err)
@@ -479,14 +506,14 @@ func BenchmarkExec(b *testing.B) {
 
 func BenchmarkExecMap(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -503,8 +530,8 @@ func BenchmarkExecMap(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err = db.ExecMap(`insert into user (name, title, age, alias, nick_name, created) 
-		values (?name,?title,?age,?alias,?nick_name,?created)`,
+		_, err = db.ExecMap("insert into user (`name`, title, age, alias, nick_name, created) "+
+			"values (?name,?title,?age,?alias,?nick_name,?created)",
 			&mp)
 		if err != nil {
 			b.Error(err)
@@ -513,14 +540,13 @@ func BenchmarkExecMap(b *testing.B) {
 }
 
 func TestExecMap(t *testing.T) {
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+	db, err := testOpen()
 	if err != nil {
 		t.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		t.Error(err)
 	}
@@ -534,8 +560,8 @@ func TestExecMap(t *testing.T) {
 		"created":   time.Now(),
 	}
 
-	_, err = db.ExecMap(`insert into user (name, title, age, alias, nick_name,created) 
-		values (?name,?title,?age,?alias,?nick_name,?created)`,
+	_, err = db.ExecMap("insert into user (`name`, title, age, alias, nick_name,created) "+
+		"values (?name,?title,?age,?alias,?nick_name,?created)",
 		&mp)
 	if err != nil {
 		t.Error(err)
@@ -557,14 +583,13 @@ func TestExecMap(t *testing.T) {
 }
 
 func TestExecStruct(t *testing.T) {
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+	db, err := testOpen()
 	if err != nil {
 		t.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		t.Error(err)
 	}
@@ -577,14 +602,14 @@ func TestExecStruct(t *testing.T) {
 		Created:  time.Now(),
 	}
 
-	_, err = db.ExecStruct(`insert into user (name, title, age, alias, nick_name,created) 
-		values (?Name,?Title,?Age,?Alias,?NickName,?Created)`,
+	_, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) "+
+		"values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
 		&user)
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := db.QueryStruct("select * from user where name = ?Name", &user)
+	rows, err := db.QueryStruct("select * from user where `name` = ?Name", &user)
 	if err != nil {
 		t.Error(err)
 	}
@@ -601,14 +626,13 @@ func TestExecStruct(t *testing.T) {
 
 func BenchmarkExecStruct(b *testing.B) {
 	b.StopTimer()
-	os.Remove("./test.db")
-	db, err := Open("sqlite3", "./test.db")
+	db, err := testOpen()
 	if err != nil {
 		b.Error(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSqlite3)
+	_, err = db.Exec(createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -624,8 +648,8 @@ func BenchmarkExecStruct(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err = db.ExecStruct(`insert into user (name, title, age, alias, nick_name,created) 
-		values (?Name,?Title,?Age,?Alias,?NickName,?Created)`,
+		_, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) "+
+			"values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
 			&user)
 		if err != nil {
 			b.Error(err)
