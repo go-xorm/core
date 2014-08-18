@@ -18,6 +18,11 @@ const (
 	CacheGcMaxRemoved = 20
 )
 
+var (
+	ErrCacheMiss = errors.New("xorm/cache: key not found.")
+	ErrNotStored = errors.New("xorm/cache: not stored.")
+)
+
 // CacheStore is a interface to store cache
 type CacheStore interface {
 	// key is primary key or composite primary key
