@@ -35,6 +35,8 @@ type Dialect interface {
 	DataSourceName() string
 
 	QuoteStr() string
+	IsReserved(string) bool
+	Quote(string) string
 	AndStr() string
 	OrStr() string
 	EqStr() string
@@ -120,10 +122,6 @@ func (b *Base) DataSourceName() string {
 	return b.dataSourceName
 }
 
-func (b *Base) Quote(c string) string {
-	return b.dialect.QuoteStr() + c + b.dialect.QuoteStr()
-}
-
 func (b *Base) AndStr() string {
 	return "AND"
 }
@@ -164,7 +162,7 @@ func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
 }
 
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {
-	quote := db.Quote
+	quote := db.dialect.Quote
 	var unique string
 	var idxName string
 	if index.Type == UniqueType {
@@ -179,7 +177,7 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 }
 
 func (db *Base) DropIndexSql(tableName string, index *Index) string {
-	quote := db.Quote
+	quote := db.dialect.Quote
 	//var unique string
 	var idxName string = index.Name
 	if !strings.HasPrefix(idxName, "UQE_") &&
@@ -205,7 +203,7 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		tableName = table.Name
 	}
 
-	sql += b.Quote(tableName) + " ("
+	sql += b.dialect.Quote(tableName) + " ("
 
 	pkList := table.PrimaryKeys
 
@@ -222,7 +220,7 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 
 	if len(pkList) > 1 {
 		sql += "PRIMARY KEY ( "
-		sql += b.Quote(strings.Join(pkList, b.Quote(",")))
+		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
 		sql += " ), "
 	}
 
