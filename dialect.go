@@ -37,6 +37,7 @@ type Dialect interface {
 	QuoteStr() string
 	IsReserved(string) bool
 	Quote(string) string
+	CheckedQuote(string) string
 	AndStr() string
 	OrStr() string
 	EqStr() string
@@ -80,7 +81,7 @@ func OpenDialect(dialect Dialect) (*DB, error) {
 	return Open(dialect.DriverName(), dialect.DataSourceName())
 }
 
-type Base struct {
+type BaseDialect struct {
 	db             *DB
 	dialect        Dialect
 	driverName     string
@@ -88,62 +89,62 @@ type Base struct {
 	*Uri
 }
 
-func (b *Base) DB() *DB {
+func (b *BaseDialect) DB() *DB {
 	return b.db
 }
 
-func (b *Base) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
+func (b *BaseDialect) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
 	b.db, b.dialect, b.Uri = db, dialect, uri
 	b.driverName, b.dataSourceName = drivername, dataSourceName
 	return nil
 }
 
-func (b *Base) URI() *Uri {
+func (b *BaseDialect) URI() *Uri {
 	return b.Uri
 }
 
-func (b *Base) DBType() DbType {
+func (b *BaseDialect) DBType() DbType {
 	return b.Uri.DbType
 }
 
-func (b *Base) FormatBytes(bs []byte) string {
+func (b *BaseDialect) FormatBytes(bs []byte) string {
 	return fmt.Sprintf("0x%x", bs)
 }
 
-func (b *Base) DriverName() string {
+func (b *BaseDialect) DriverName() string {
 	return b.driverName
 }
 
-func (b *Base) ShowCreateNull() bool {
+func (b *BaseDialect) ShowCreateNull() bool {
 	return true
 }
 
-func (b *Base) DataSourceName() string {
+func (b *BaseDialect) DataSourceName() string {
 	return b.dataSourceName
 }
 
-func (b *Base) AndStr() string {
+func (b *BaseDialect) AndStr() string {
 	return "AND"
 }
 
-func (b *Base) OrStr() string {
+func (b *BaseDialect) OrStr() string {
 	return "OR"
 }
 
-func (b *Base) EqStr() string {
+func (b *BaseDialect) EqStr() string {
 	return "="
 }
 
-func (db *Base) RollBackStr() string {
+func (b *BaseDialect) RollBackStr() string {
 	return "ROLL BACK"
 }
 
-func (db *Base) DropTableSql(tableName string) string {
-	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+func (b *BaseDialect) DropTableSql(tableName string) string {
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName)
 }
 
-func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
-	rows, err := db.DB().Query(query, args...)
+func (b *BaseDialect) HasRecords(query string, args ...interface{}) (bool, error) {
+	rows, err := b.DB().Query(query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -155,14 +156,14 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	return false, nil
 }
 
-func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
-	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
-	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
-	return db.HasRecords(query, db.DbName, tableName, col.Name)
+func (b *BaseDialect) IsColumnExist(tableName string, col *Column) (bool, error) {
+	query := "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_NAME=?"
+	query = strings.Replace(query, "`", b.dialect.QuoteStr(), -1)
+	return b.HasRecords(query, b.DbName, tableName, col.Name)
 }
 
-func (db *Base) CreateIndexSql(tableName string, index *Index) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
+	quote := b.dialect.Quote
 	var unique string
 	var idxName string
 	if index.Type == UniqueType {
@@ -176,8 +177,8 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 		quote(strings.Join(index.Cols, quote(","))))
 }
 
-func (db *Base) DropIndexSql(tableName string, index *Index) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) DropIndexSql(tableName string, index *Index) string {
+	quote := b.dialect.Quote
 	//var unique string
 	var idxName string = index.Name
 	if !strings.HasPrefix(idxName, "UQE_") &&
@@ -192,18 +193,18 @@ func (db *Base) DropIndexSql(tableName string, index *Index) string {
 		quote(idxName), quote(tableName))
 }
 
-func (db *Base) ModifyColumnSql(tableName string, col *Column) string {
-	return fmt.Sprintf("alter table %s MODIFY COLUMN %s", tableName, col.StringNoPk(db.dialect))
+func (b *BaseDialect) ModifyColumnSql(tableName string, col *Column) string {
+	return fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s", tableName, col.StringNoPk(b.dialect))
 }
 
-func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
+func (b *BaseDialect) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
-		tableName = table.Name
+		tableName = table.CCheckedName(b.dialect)
 	}
 
-	sql += b.dialect.Quote(tableName) + " ("
+	sql += tableName + "("
 
 	pkList := table.PrimaryKeys
 
@@ -215,16 +216,17 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 			sql += col.StringNoPk(b.dialect)
 		}
 		sql = strings.TrimSpace(sql)
-		sql += ", "
+		sql += ","
 	}
 
 	if len(pkList) > 1 {
-		sql += "PRIMARY KEY ( "
-		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
-		sql += " ), "
+		sql += "PRIMARY KEY("
+		// sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
+		sql += strings.Join(pkList, ",")
+		sql += "),"
 	}
 
-	sql = sql[:len(sql)-2] + ")"
+	sql = sql[:len(sql)-1] + ")"
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}

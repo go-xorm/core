@@ -21,6 +21,14 @@ type Table struct {
 	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
+	checkedName   string
+}
+
+func (table *Table) CCheckedName(d Dialect) string {
+	if len(table.checkedName) == 0 {
+		table.checkedName = d.CheckedQuote(table.Name)
+	}
+	return table.checkedName
 }
 
 func (table *Table) Columns() []*Column {
@@ -32,10 +40,10 @@ func (table *Table) ColumnsSeq() []string {
 }
 
 func NewEmptyTable() *Table {
-	return NewTable("", nil)
+	return newTable("", nil)
 }
 
-func NewTable(name string, t reflect.Type) *Table {
+func newTable(name string, t reflect.Type) *Table {
 	return &Table{Name: name, Type: t,
 		columnsSeq:  make([]string, 0),
 		columns:     make([]*Column, 0),

@@ -33,9 +33,10 @@ type Column struct {
 	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
+	checkedName     string
 }
 
-func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
+func NewColumn(name, checkedName, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
 	return &Column{
 		Name:            name,
 		FieldName:       fieldName,
@@ -55,12 +56,21 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		fieldPath:       nil,
 		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),
+		checkedName:     checkedName,
 	}
+}
+
+// this would include quote if clashed with keywords
+func (col *Column) CheckedName(d Dialect) string {
+	if len(col.checkedName) == 0 {
+		col.checkedName = d.CheckedQuote(col.Name)
+	}
+	return col.checkedName
 }
 
 // generate column description string according dialect
 func (col *Column) String(d Dialect) string {
-	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
+	sql := col.CheckedName(d) + " "
 
 	sql += d.SqlType(col) + " "
 
@@ -87,7 +97,7 @@ func (col *Column) String(d Dialect) string {
 }
 
 func (col *Column) StringNoPk(d Dialect) string {
-	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
+	sql := col.CheckedName(d) + " "
 
 	sql += d.SqlType(col) + " "
 
