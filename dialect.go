@@ -163,7 +163,7 @@ func (b *BaseDialect) IsColumnExist(tableName string, col *Column) (bool, error)
 }
 
 func (b *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
-	quote := b.dialect.Quote
+	quote := b.dialect.CheckedQuote
 	var unique string
 	var idxName string
 	if index.Type == UniqueType {
@@ -174,7 +174,7 @@ func (b *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 	}
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
-		quote(strings.Join(index.Cols, quote(","))))
+		strings.Join(index.Cols, ","))
 }
 
 func (b *BaseDialect) DropIndexSql(tableName string, index *Index) string {

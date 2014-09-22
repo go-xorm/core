@@ -14,7 +14,15 @@ type Index struct {
 	Name string
 	Type int
 	Cols []string
+	// checkedName string
 }
+
+// func (index *Index) CheckedName(d Dialect) string {
+// 	if len(index.checkedName) == 0 {
+// 		index.checkedName = d.CheckedQuote(index.Name)
+// 	}
+// 	return index.checkedName
+// }
 
 // add columns which will be composite index
 func (index *Index) AddColumn(cols ...string) {
