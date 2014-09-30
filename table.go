@@ -24,7 +24,7 @@ type Table struct {
 	checkedName   string
 }
 
-func (table *Table) CCheckedName(d Dialect) string {
+func (table *Table) CheckedName(d Dialect) string {
 	if len(table.checkedName) == 0 {
 		table.checkedName = d.CheckedQuote(table.Name)
 	}

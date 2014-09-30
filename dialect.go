@@ -140,7 +140,7 @@ func (b *BaseDialect) RollBackStr() string {
 }
 
 func (b *BaseDialect) DropTableSql(tableName string) string {
-	return fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName)
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", b.dialect.CheckedQuote(tableName))
 }
 
 func (b *BaseDialect) HasRecords(query string, args ...interface{}) (bool, error) {
@@ -174,11 +174,11 @@ func (b *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 	}
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
-		strings.Join(index.Cols, ","))
+		quote(strings.Join(index.Cols, quote(","))))
 }
 
 func (b *BaseDialect) DropIndexSql(tableName string, index *Index) string {
-	quote := b.dialect.Quote
+	quote := b.dialect.CheckedQuote
 	//var unique string
 	var idxName string = index.Name
 	if !strings.HasPrefix(idxName, "UQE_") &&
@@ -194,14 +194,14 @@ func (b *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 }
 
 func (b *BaseDialect) ModifyColumnSql(tableName string, col *Column) string {
-	return fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s", tableName, col.StringNoPk(b.dialect))
+	return fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s", b.dialect.CheckedQuote(tableName), col.StringNoPk(b.dialect))
 }
 
 func (b *BaseDialect) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
-		tableName = table.CCheckedName(b.dialect)
+		tableName = b.dialect.CheckedQuote(table.Name)
 	}
 
 	sql += tableName + "("

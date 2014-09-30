@@ -31,7 +31,7 @@ func NewQuoter(dialect Dialect) *Quoter {
 }
 
 func (q *Quoter) Quote(content string) string {
-	return q.dialect.QuoteStr() + content + q.dialect.QuoteStr()
+	return q.dialect.CheckedQuote(content)
 }
 
 func (i *IdFilter) Do(sql string, dialect Dialect, table *Table) string {
