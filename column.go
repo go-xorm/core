@@ -29,6 +29,7 @@ type Column struct {
 	IsUpdated       bool
 	IsCascade       bool
 	IsVersion       bool
+	IsSoftDelete    bool
 	fieldPath       []string
 	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
@@ -52,6 +53,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		IsUpdated:       false,
 		IsCascade:       false,
 		IsVersion:       false,
+		IsSoftDelete:    false,
 		fieldPath:       nil,
 		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),

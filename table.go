@@ -18,6 +18,7 @@ type Table struct {
 	Created       map[string]bool
 	Updated       string
 	Version       string
+	SoftDelete    string
 	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
@@ -83,6 +84,10 @@ func (table *Table) UpdatedColumn() *Column {
 	return table.GetColumn(table.Updated)
 }
 
+func (table *Table) SoftDeleteColumn() *Column {
+	return table.GetColumn(table.SoftDelete)
+}
+
 // add a column to table
 func (table *Table) AddColumn(col *Column) {
 	table.columnsSeq = append(table.columnsSeq, col.Name)
@@ -108,6 +113,9 @@ func (table *Table) AddColumn(col *Column) {
 	}
 	if col.IsVersion {
 		table.Version = col.Name
+	}
+	if col.IsSoftDelete {
+		table.SoftDelete = col.Name
 	}
 }
 
