@@ -27,6 +27,7 @@ type Column struct {
 	MapType         int
 	IsCreated       bool
 	IsUpdated       bool
+	IsDeleted       bool
 	IsCascade       bool
 	IsVersion       bool
 	fieldPath       []string
@@ -50,6 +51,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		MapType:         TWOSIDES,
 		IsCreated:       false,
 		IsUpdated:       false,
+		IsDeleted:       false,
 		IsCascade:       false,
 		IsVersion:       false,
 		fieldPath:       nil,

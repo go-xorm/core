@@ -17,6 +17,7 @@ type Table struct {
 	AutoIncrement string
 	Created       map[string]bool
 	Updated       string
+	Deleted       string
 	Version       string
 	Cacher        Cacher
 	StoreEngine   string
@@ -83,6 +84,10 @@ func (table *Table) UpdatedColumn() *Column {
 	return table.GetColumn(table.Updated)
 }
 
+func (table *Table) DeletedColumn() *Column {
+	return table.GetColumn(table.Deleted)
+}
+
 // add a column to table
 func (table *Table) AddColumn(col *Column) {
 	table.columnsSeq = append(table.columnsSeq, col.Name)
@@ -105,6 +110,9 @@ func (table *Table) AddColumn(col *Column) {
 	}
 	if col.IsUpdated {
 		table.Updated = col.Name
+	}
+	if col.IsDeleted {
+		table.Deleted = col.Name
 	}
 	if col.IsVersion {
 		table.Version = col.Name
