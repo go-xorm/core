@@ -17,8 +17,8 @@ type Table struct {
 	AutoIncrement string
 	Created       map[string]bool
 	Updated       string
+	Deleted       string
 	Version       string
-	SoftDelete    string
 	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
@@ -84,8 +84,8 @@ func (table *Table) UpdatedColumn() *Column {
 	return table.GetColumn(table.Updated)
 }
 
-func (table *Table) SoftDeleteColumn() *Column {
-	return table.GetColumn(table.SoftDelete)
+func (table *Table) DeletedColumn() *Column {
+	return table.GetColumn(table.Deleted)
 }
 
 // add a column to table
@@ -111,11 +111,11 @@ func (table *Table) AddColumn(col *Column) {
 	if col.IsUpdated {
 		table.Updated = col.Name
 	}
+	if col.IsDeleted {
+		table.Deleted = col.Name
+	}
 	if col.IsVersion {
 		table.Version = col.Name
-	}
-	if col.IsSoftDelete {
-		table.SoftDelete = col.Name
 	}
 }
 
