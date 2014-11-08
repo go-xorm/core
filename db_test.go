@@ -46,7 +46,7 @@ func testOpen() (*DB, error) {
 		os.Remove("./test.db")
 		return Open("sqlite3", "./test.db")
 	case "mysql":
-		return Open("mysql", "root:@/core_test?charset=utf8&parseTime=true")
+		return Open("mysql", "root:@/core_test?charset=utf8")
 	default:
 		panic("no db type")
 	}
@@ -228,7 +228,8 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 			if err != nil {
 				b.Error(err)
 			}
-			if slice[1].(string) != "xlw" {
+			fmt.Println(slice)
+			if *slice[1].(*string) != "xlw" {
 				fmt.Println(slice)
 				b.Error(errors.New("name should be xlw"))
 			}

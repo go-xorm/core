@@ -24,6 +24,7 @@ type Uri struct {
 
 // a dialect is a driver's wrapper
 type Dialect interface {
+	SetLogger(logger ILogger)
 	Init(*DB, *Uri, string, string) error
 	URI() *Uri
 	DB() *DB
@@ -85,11 +86,16 @@ type Base struct {
 	dialect        Dialect
 	driverName     string
 	dataSourceName string
+	Logger         ILogger
 	*Uri
 }
 
 func (b *Base) DB() *DB {
 	return b.db
+}
+
+func (b *Base) SetLogger(logger ILogger) {
+	b.Logger = logger
 }
 
 func (b *Base) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
@@ -144,6 +150,9 @@ func (db *Base) DropTableSql(tableName string) string {
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	rows, err := db.DB().Query(query, args...)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", query, args)
+	}
 	if err != nil {
 		return false, err
 	}
