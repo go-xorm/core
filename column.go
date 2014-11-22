@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -116,7 +117,6 @@ func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 
 func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 	var fieldValue reflect.Value
-	var err error
 	if col.fieldPath == nil {
 		col.fieldPath = strings.Split(col.FieldName, ".")
 	}
@@ -137,18 +137,21 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 					if parentField.IsValid() {
 						fieldValue = parentField.FieldByName(col.fieldPath[1])
 					} else {
-						err = fmt.Errorf("field  %v is not valid", col.FieldName)
+						return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
 					}
 				}
 			}
 		} else {
-			err = fmt.Errorf("field  %v is not valid", col.FieldName)
+			// so we can use a different struct as conditions
+			fieldValue = dataStruct.FieldByName(col.fieldPath[1])
 		}
 	} else {
-		err = fmt.Errorf("Unsupported mutliderive %v", col.FieldName)
+		return nil, fmt.Errorf("Unsupported mutliderive %v", col.FieldName)
 	}
-	if err != nil {
-		return nil, err
+
+	if !fieldValue.IsValid() {
+		return nil, errors.New("no find field matched")
 	}
+
 	return &fieldValue, nil
 }
