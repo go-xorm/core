@@ -37,7 +37,7 @@ func TestGonicMapperToObj(t *testing.T) {
 	}
 
 	for in, expected := range testCases {
-		out := gonicTitleCasedName(in)
+		out := LintGonicMapper.Table2Obj(in)
 		if out != expected {
 			t.Errorf("Given %s, expected %s but got %s", in, expected, out)
 		}

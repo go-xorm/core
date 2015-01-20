@@ -154,7 +154,7 @@ func (mapper SnakeMapper) TableName(t string) string {
 
 // GonicMapper implements IMapper. It will consider initialisms when mapping names.
 // E.g. id -> ID, user -> User and to table names: UserID -> user_id, MyUID -> my_uid
-type GonicMapper struct{}
+type GonicMapper map[string]bool
 
 func isASCIIUpper(r rune) bool {
 	return 'A' <= r && r <= 'Z'
@@ -193,8 +193,31 @@ func (mapper GonicMapper) Obj2Table(name string) string {
 	return gonicCasedName(name)
 }
 
-// A list of common initialisms taken from golang/lint
-var commonInitialisms = map[string]bool{
+func (mapper GonicMapper) Table2Obj(name string) string {
+	newstr := make([]rune, 0)
+
+	name = strings.ToLower(name)
+	parts := strings.Split(name, "_")
+
+	for _, p := range parts {
+		_, isInitialism := mapper[strings.ToUpper(p)]
+		for i, r := range p {
+			if i == 0 || isInitialism {
+				r = toASCIIUpper(r)
+			}
+			newstr = append(newstr, r)
+		}
+	}
+
+	return string(newstr)
+}
+
+func (mapper GonicMapper) TableName(t string) string {
+	return t
+}
+
+// A GonicMapper that contains a list of common initialisms taken from golang/lint
+var LintGonicMapper = GonicMapper{
 	"API":   true,
 	"ASCII": true,
 	"CPU":   true,
@@ -228,33 +251,6 @@ var commonInitialisms = map[string]bool{
 	"XML":   true,
 	"XSRF":  true,
 	"XSS":   true,
-}
-
-func gonicTitleCasedName(name string) string {
-	newstr := make([]rune, 0)
-
-	name = strings.ToLower(name)
-	parts := strings.Split(name, "_")
-
-	for _, p := range parts {
-		_, isInitialism := commonInitialisms[strings.ToUpper(p)]
-		for i, r := range p {
-			if i == 0 || isInitialism {
-				r = toASCIIUpper(r)
-			}
-			newstr = append(newstr, r)
-		}
-	}
-
-	return string(newstr)
-}
-
-func (mapper GonicMapper) Table2Obj(name string) string {
-	return gonicTitleCasedName(name)
-}
-
-func (mapper GonicMapper) TableName(t string) string {
-	return t
 }
 
 // provide prefix table name support
