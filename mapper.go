@@ -9,7 +9,6 @@ import (
 type IMapper interface {
 	Obj2Table(string) string
 	Table2Obj(string) string
-	TableName(string) string
 }
 
 type CacheMapper struct {
@@ -56,10 +55,6 @@ func (m *CacheMapper) Table2Obj(t string) string {
 	return o
 }
 
-func (m *CacheMapper) TableName(t string) string {
-	return t
-}
-
 // SameMapper implements IMapper and provides same name between struct and
 // database table
 type SameMapper struct {
@@ -70,10 +65,6 @@ func (m SameMapper) Obj2Table(o string) string {
 }
 
 func (m SameMapper) Table2Obj(t string) string {
-	return t
-}
-
-func (m SameMapper) TableName(t string) string {
 	return t
 }
 
@@ -96,25 +87,6 @@ func snakeCasedName(name string) string {
 
 	return string(newstr)
 }
-
-/*func pascal2Sql(s string) (d string) {
-    d = ""
-    lastIdx := 0
-    for i := 0; i < len(s); i++ {
-        if s[i] >= 'A' && s[i] <= 'Z' {
-            if lastIdx < i {
-                d += s[lastIdx+1 : i]
-            }
-            if i != 0 {
-                d += "_"
-            }
-            d += string(s[i] + 32)
-            lastIdx = i
-        }
-    }
-    d += s[lastIdx+1:]
-    return
-}*/
 
 func (mapper SnakeMapper) Obj2Table(name string) string {
 	return snakeCasedName(name)
@@ -148,10 +120,6 @@ func (mapper SnakeMapper) Table2Obj(name string) string {
 	return titleCasedName(name)
 }
 
-func (mapper SnakeMapper) TableName(t string) string {
-	return t
-}
-
 // provide prefix table name support
 type PrefixMapper struct {
 	Mapper IMapper
@@ -164,10 +132,6 @@ func (mapper PrefixMapper) Obj2Table(name string) string {
 
 func (mapper PrefixMapper) Table2Obj(name string) string {
 	return mapper.Mapper.Table2Obj(name[len(mapper.Prefix):])
-}
-
-func (mapper PrefixMapper) TableName(name string) string {
-	return mapper.Prefix + name
 }
 
 func NewPrefixMapper(mapper IMapper, prefix string) PrefixMapper {
@@ -186,10 +150,6 @@ func (mapper SuffixMapper) Obj2Table(name string) string {
 
 func (mapper SuffixMapper) Table2Obj(name string) string {
 	return mapper.Mapper.Table2Obj(name[:len(name)-len(mapper.Suffix)])
-}
-
-func (mapper SuffixMapper) TableName(name string) string {
-	return name + mapper.Suffix
 }
 
 func NewSuffixMapper(mapper IMapper, suffix string) SuffixMapper {
