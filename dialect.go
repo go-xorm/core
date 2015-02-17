@@ -52,10 +52,7 @@ type Dialect interface {
 
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
-	//ColumnCheckSql(tableName, colName string) (string, []interface{})
 
-	//IsTableExist(tableName string) (bool, error)
-	//IsIndexExist(tableName string, idx *Index) (bool, error)
 	IsColumnExist(tableName string, col *Column) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
@@ -176,10 +173,8 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 	var idxName string
 	if index.Type == UniqueType {
 		unique = " UNIQUE"
-		idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
-	} else {
-		idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 	}
+	idxName = index.XName(tableName)
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
@@ -187,18 +182,13 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 
 func (db *Base) DropIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
-	//var unique string
-	var idxName string = index.Name
-	if !strings.HasPrefix(idxName, "UQE_") &&
-		!strings.HasPrefix(idxName, "IDX_") {
-		if index.Type == UniqueType {
-			idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
-		} else {
-			idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
-		}
+	var name string
+	if index.IsRegular {
+		name = index.XName(tableName)
+	} else {
+		name = index.Name
 	}
-	return fmt.Sprintf("DROP INDEX %v ON %s",
-		quote(idxName), quote(tableName))
+	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 
 func (db *Base) ModifyColumnSql(tableName string, col *Column) string {
