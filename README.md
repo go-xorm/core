@@ -1,6 +1,4 @@
-[中文](https://github.com/go-xorm/xorm/blob/master/README_CN.md)
-
-Core is a light wrapper of sql.DB.
+Core is a lightweight wrapper of sql.DB.
 
 # Open
 ```Go
