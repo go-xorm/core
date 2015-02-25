@@ -10,23 +10,61 @@ db, _ := core.Open(db, connstr)
 db.SetMapper(SameMapper())
 ```
 
-# More scan usage
-```Go
+## Scan usage
 
+### Scan
+```Go
 rows, _ := db.Query()
 for rows.Next() {
     rows.Scan()
+}
+```
+
+### ScanMap
+```Go
+rows, _ := db.Query()
+for rows.Next() {
     rows.ScanMap()
-    rows.ScanSlice()
+```
+
+### ScanSlice
+
+You can use `[]string`, `[][]byte`, `[]interface{}`, `[]*string`, `[]sql.NullString` to ScanSclice. Notice, slice's length should be equal or less than select columns.
+
+```Go
+rows, _ := db.Query()
+cols, _ := rows.Columns()
+for rows.Next() {
+    var s = make([]string, len(cols))
+    rows.ScanSlice(&s)
+}
+```
+
+```Go
+rows, _ := db.Query()
+cols, _ := rows.Columns()
+for rows.Next() {
+    var s = make([]*string, len(cols))
+    rows.ScanSlice(&s)
+}
+```
+
+### ScanStruct
+```Go
+rows, _ := db.Query()
+for rows.Next() {
     rows.ScanStructByName()
     rows.ScanStructByIndex()
 }
 ```
 
-# More Query usage
+## Query usage
 ```Go
 rows, err := db.Query("select * from table where name = ?", name)
 
+user = User{
+    Name:"lunny",
+}
 rows, err := db.QueryStruct("select * from table where name = ?Name",
             &user)
 
@@ -37,20 +75,24 @@ rows, err = db.QueryMap("select * from table where name = ?name",
             &user)
 ```
 
-# More QueryRow usage
+## QueryRow usage
 ```Go
-rows, err := db.QueryRow("select * from table where name = ?", name)
+row := db.QueryRow("select * from table where name = ?", name)
 
-rows, err := db.QueryRowStruct("select * from table where name = ?Name",
+user = User{
+    Name:"lunny",
+}
+row := db.QueryRowStruct("select * from table where name = ?Name",
             &user)
+
 var user = map[string]interface{}{
     "name": "lunny",
 }
-rows, err = db.QueryRowMap("select * from table where name = ?name",
+row = db.QueryRowMap("select * from table where name = ?name",
             &user)
 ```
 
-# More Exec usage
+## Exec usage
 ```Go
 db.Exec("insert into user (`name`, title, age, alias, nick_name,created) values (?,?,?,?,?,?)", name, title, age, alias...)
 
