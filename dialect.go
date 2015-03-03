@@ -56,20 +56,16 @@ type Dialect interface {
 	IsColumnExist(tableName string, col *Column) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
-	DropTableSql(tableName string) string
+	//DropTableSql(tableName string) string
 	CreateIndexSql(tableName string, index *Index) string
 	DropIndexSql(tableName string, index *Index) string
 
 	ModifyColumnSql(tableName string, col *Column) string
 
+	MustDropTable(tableName string) error
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
 	GetIndexes(tableName string) (map[string]*Index, error)
-
-	// Get data from db cell to a struct's field
-	//GetData(col *Column, fieldValue *reflect.Value, cellData interface{}) error
-	// Set field data to db
-	//SetData(col *Column, fieldValue *refelct.Value) (interface{}, error)
 
 	Filters() []Filter
 }
@@ -143,6 +139,11 @@ func (db *Base) RollBackStr() string {
 
 func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+}
+
+func (db *Base) MustDropTable(tableName string) error {
+	_, err := db.db.Exec(db.DropTableSql(tableName))
+	return err
 }
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
