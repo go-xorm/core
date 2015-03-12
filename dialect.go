@@ -56,13 +56,15 @@ type Dialect interface {
 	IsColumnExist(tableName string, col *Column) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
-	//DropTableSql(tableName string) string
+	DropTableSql(tableName string) string
 	CreateIndexSql(tableName string, index *Index) string
 	DropIndexSql(tableName string, index *Index) string
 
 	ModifyColumnSql(tableName string, col *Column) string
 
+	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
 	MustDropTable(tableName string) error
+
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
 	GetIndexes(tableName string) (map[string]*Index, error)
@@ -138,11 +140,15 @@ func (db *Base) RollBackStr() string {
 }
 
 func (db *Base) DropTableSql(tableName string) string {
-	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`;", tableName)
 }
 
 func (db *Base) MustDropTable(tableName string) error {
-	_, err := db.db.Exec(db.DropTableSql(tableName))
+	query := db.DropTableSql(tableName)
+	_, err := db.db.Exec(query)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", query)
+	}
 	return err
 }
 
@@ -168,6 +174,30 @@ func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
 	return db.HasRecords(query, db.DbName, tableName, col.Name)
 }
 
+/*
+func (db *Base) CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error {
+	sql, args := db.dialect.TableCheckSql(tableName)
+	rows, err := db.DB().Query(sql, args...)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql, args)
+	}
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return nil
+	}
+
+	sql = db.dialect.CreateTableSql(table, tableName, storeEngine, charset)
+	_, err = db.DB().Exec(sql)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql)
+	}
+	return err
+}*/
+
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
 	var unique string
@@ -176,7 +206,7 @@ func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 		unique = " UNIQUE"
 	}
 	idxName = index.XName(tableName)
-	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
 }
