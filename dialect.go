@@ -47,6 +47,7 @@ type Dialect interface {
 	SupportInsertMany() bool
 	SupportEngine() bool
 	SupportCharset() bool
+	SupportDropIfExists() bool
 	IndexOnTable() bool
 	ShowCreateNull() bool
 
@@ -63,7 +64,7 @@ type Dialect interface {
 	ModifyColumnSql(tableName string, col *Column) string
 
 	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
-	MustDropTable(tableName string) error
+	//MustDropTable(tableName string) error
 
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
@@ -139,17 +140,12 @@ func (db *Base) RollBackStr() string {
 	return "ROLL BACK"
 }
 
-func (db *Base) DropTableSql(tableName string) string {
-	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`;", tableName)
+func (db *Base) SupportDropIfExists() bool {
+	return true
 }
 
-func (db *Base) MustDropTable(tableName string) error {
-	query := db.DropTableSql(tableName)
-	_, err := db.db.Exec(query)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", query)
-	}
-	return err
+func (db *Base) DropTableSql(tableName string) string {
+	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
