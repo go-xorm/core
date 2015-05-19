@@ -54,7 +54,7 @@ type Dialect interface {
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
 
-	IsColumnExist(tableName string, col *Column) (bool, error)
+	IsColumnExist(tableName string, colName string) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	DropTableSql(tableName string) string
@@ -164,10 +164,10 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	return false, nil
 }
 
-func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
+func (db *Base) IsColumnExist(tableName, colName string) (bool, error) {
 	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
 	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
-	return db.HasRecords(query, db.DbName, tableName, col.Name)
+	return db.HasRecords(query, db.DbName, tableName, colName)
 }
 
 /*
