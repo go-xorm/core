@@ -251,6 +251,16 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 	}
 
 	sql = sql[:len(sql)-2] + ")"
+
+	// By hzm
+	b.Logger.Info("[Inherits]", table.Inherits, b.DriverName())
+	lInherits := table.Inherits
+	if len(lInherits) > 0 && strings.EqualFold(b.DriverName(), "postgres") {
+		sql += "INHERITS  ( "
+		sql += strings.Join(lInherits, ",")
+		sql += " ) "
+	}
+
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}

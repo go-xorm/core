@@ -22,6 +22,8 @@ type Table struct {
 	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
+
+	Inherits []string //By Hzm
 }
 
 func (table *Table) Columns() []*Column {
@@ -127,4 +129,9 @@ func (table *Table) AddColumn(col *Column) {
 // add an index or an unique to table
 func (table *Table) AddIndex(index *Index) {
 	table.Indexes[index.Name] = index
+}
+
+// by hzm
+func (table *Table) AddInherit(aNew string) {
+	table.Inherits = append(table.Inherits, aNew)
 }
