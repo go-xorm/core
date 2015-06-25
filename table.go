@@ -46,6 +46,7 @@ func NewTable(name string, t reflect.Type) *Table {
 		Indexes:     make(map[string]*Index),
 		Created:     make(map[string]bool),
 		PrimaryKeys: make([]string, 0),
+		Inherits:    make([]string, 0), //by hzm
 	}
 }
 
