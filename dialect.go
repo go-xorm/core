@@ -267,16 +267,16 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 }
 
 var (
-	dialects = map[DbType]Dialect{}
+	dialects = map[DbType]func() Dialect{}
 )
 
-func RegisterDialect(dbName DbType, dialect Dialect) {
-	if dialect == nil {
+func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
+	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[dbName] = dialect // !nashtsai! allow override dialect
+	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
 }
 
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]
+	return dialects[dbName]()
 }

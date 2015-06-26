@@ -254,7 +254,7 @@ func Type2SQLType(t reflect.Type) (st SQLType) {
 	case reflect.String:
 		st = SQLType{Varchar, 255, 0}
 	case reflect.Struct:
-		if t.ConvertibleTo(reflect.TypeOf(c_TIME_DEFAULT)) {
+		if t.ConvertibleTo(TimeType) {
 			st = SQLType{DateTime, 0, 0}
 		} else {
 			// TODO need to handle association struct
