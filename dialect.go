@@ -229,28 +229,33 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		tableName = table.Name
 	}
 
-	sql += b.dialect.Quote(tableName) + " ("
+	sql += b.dialect.Quote(tableName)
+	sql += " ("
 
-	pkList := table.PrimaryKeys
+	if len(table.ColumnsSeq()) > 0 {
+		pkList := table.PrimaryKeys
 
-	for _, colName := range table.ColumnsSeq() {
-		col := table.GetColumn(colName)
-		if col.IsPrimaryKey && len(pkList) == 1 {
-			sql += col.String(b.dialect)
-		} else {
-			sql += col.StringNoPk(b.dialect)
+		for _, colName := range table.ColumnsSeq() {
+			col := table.GetColumn(colName)
+			if col.IsPrimaryKey && len(pkList) == 1 {
+				sql += col.String(b.dialect)
+			} else {
+				sql += col.StringNoPk(b.dialect)
+			}
+			sql = strings.TrimSpace(sql)
+			sql += ", "
 		}
-		sql = strings.TrimSpace(sql)
-		sql += ", "
-	}
 
-	if len(pkList) > 1 {
-		sql += "PRIMARY KEY ( "
-		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
-		sql += " ), "
-	}
+		if len(pkList) > 1 {
+			sql += "PRIMARY KEY ( "
+			sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
+			sql += " ), "
+		}
 
-	sql = sql[:len(sql)-2] + ")"
+		sql = sql[:len(sql)-2]
+	}
+	sql += ")"
+
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}
@@ -262,7 +267,7 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 			sql += " DEFAULT CHARSET " + charset
 		}
 	}
-	sql += ";"
+
 	return sql
 }
 
