@@ -63,6 +63,8 @@ type Dialect interface {
 
 	ModifyColumnSql(tableName string, col *Column) string
 
+	ForUpdateSql(query string) string
+
 	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
 	//MustDropTable(tableName string) error
 
@@ -269,6 +271,10 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 	}
 
 	return sql
+}
+
+func (b *Base) ForUpdateSql(query string) string {
+	return query + " FOR UPDATE"
 }
 
 var (
