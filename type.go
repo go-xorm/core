@@ -53,6 +53,10 @@ func (s *SQLType) IsNumeric() bool {
 	return s.IsType(NUMERIC_TYPE)
 }
 
+func (s *SQLType) IsJson() bool {
+	return s.Name == Json
+}
+
 var (
 	Bit       = "BIT"
 	TinyInt   = "TINYINT"
