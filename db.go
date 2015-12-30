@@ -43,7 +43,10 @@ type DB struct {
 
 func Open(driverName, dataSourceName string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}, err
+	if err != nil {
+		return nil, err
+	}
+	return &DB{db, NewCacheMapper(&SnakeMapper{})}, nil
 }
 
 func FromDB(db *sql.DB) *DB {
@@ -52,7 +55,13 @@ func FromDB(db *sql.DB) *DB {
 
 func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
 	rows, err := db.DB.Query(query, args...)
-	return &Rows{rows, db.Mapper}, err
+	if err != nil {
+		if rows != nil {
+			rows.Close()
+		}
+		return nil, err
+	}
+	return &Rows{rows, db.Mapper}, nil
 }
 
 func (db *DB) QueryMap(query string, mp interface{}) (*Rows, error) {
