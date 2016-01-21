@@ -124,6 +124,9 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 		keyValue := reflect.ValueOf(col.fieldPath[len(col.fieldPath)-1])
 		fieldValue = dataStruct.MapIndex(keyValue)
 		return &fieldValue, nil
+	} else if dataStruct.Type().Kind() == reflect.Interface {
+		structValue := reflect.ValueOf(dataStruct.Interface())
+		dataStruct = &structValue
 	}
 
 	level := len(col.fieldPath)
