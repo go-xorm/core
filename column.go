@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 const (
@@ -34,6 +35,8 @@ type Column struct {
 	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
+	DisableTimeZone bool
+	TimeZone        *time.Location // column specified time zone
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
