@@ -84,7 +84,7 @@ type Base struct {
 	dialect        Dialect
 	driverName     string
 	dataSourceName string
-	Logger         ILogger
+	logger         ILogger
 	*Uri
 }
 
@@ -93,7 +93,7 @@ func (b *Base) DB() *DB {
 }
 
 func (b *Base) SetLogger(logger ILogger) {
-	b.Logger = logger
+	b.logger = logger
 }
 
 func (b *Base) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
@@ -151,10 +151,8 @@ func (db *Base) DropTableSql(tableName string) string {
 }
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
+	db.LogSQL(query, args)
 	rows, err := db.DB().Query(query, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", query, args)
-	}
 	if err != nil {
 		return false, err
 	}
@@ -275,6 +273,16 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 
 func (b *Base) ForUpdateSql(query string) string {
 	return query + " FOR UPDATE"
+}
+
+func (b *Base) LogSQL(sql string, args []interface{}) {
+	if b.logger != nil && b.logger.IsShowSQL() {
+		if len(args) > 0 {
+			b.logger.Info("[sql]", sql, args)
+		} else {
+			b.logger.Info("[sql]", sql)
+		}
+	}
 }
 
 var (
