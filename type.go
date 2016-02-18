@@ -105,7 +105,8 @@ var (
 	Serial    = "SERIAL"
 	BigSerial = "BIGSERIAL"
 
-	Json = "JSON"
+	Json  = "JSON"
+	Jsonb = "JSONB"
 
 	SqlTypes = map[string]int{
 		Bit:       NUMERIC_TYPE,
@@ -116,9 +117,10 @@ var (
 		Integer:   NUMERIC_TYPE,
 		BigInt:    NUMERIC_TYPE,
 
-		Enum: TEXT_TYPE,
-		Set:  TEXT_TYPE,
-		Json: TEXT_TYPE,
+		Enum:  TEXT_TYPE,
+		Set:   TEXT_TYPE,
+		Json:  TEXT_TYPE,
+		Jsonb: TEXT_TYPE,
 
 		Char:       TEXT_TYPE,
 		Varchar:    TEXT_TYPE,
