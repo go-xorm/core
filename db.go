@@ -142,12 +142,24 @@ func (row *Row) ScanStructByName(dest interface{}) error {
 	if row.err != nil {
 		return row.err
 	}
+	if !row.rows.Next() {
+		if err := row.rows.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
+	}
 	return row.rows.ScanStructByName(dest)
 }
 
 func (row *Row) ScanStructByIndex(dest interface{}) error {
 	if row.err != nil {
 		return row.err
+	}
+	if !row.rows.Next() {
+		if err := row.rows.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
 	}
 	return row.rows.ScanStructByIndex(dest)
 }
@@ -157,6 +169,12 @@ func (row *Row) ScanSlice(dest interface{}) error {
 	if row.err != nil {
 		return row.err
 	}
+	if !row.rows.Next() {
+		if err := row.rows.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
+	}
 	return row.rows.ScanSlice(dest)
 }
 
@@ -165,12 +183,21 @@ func (row *Row) ScanMap(dest interface{}) error {
 	if row.err != nil {
 		return row.err
 	}
+	if !row.rows.Next() {
+		if err := row.rows.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
+	}
 	return row.rows.ScanMap(dest)
 }
 
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
 	rows, err := db.Query(query, args...)
-	return &Row{rows, err}
+	if err != nil {
+		return &Row{nil, err}
+	}
+	return &Row{rows, nil}
 }
 
 func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
