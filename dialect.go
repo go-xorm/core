@@ -20,6 +20,7 @@ type Uri struct {
 	Laddr   string
 	Raddr   string
 	Timeout time.Duration
+	Schema  string
 }
 
 // a dialect is a driver's wrapper
