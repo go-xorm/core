@@ -4,12 +4,12 @@ type LogLevel int
 
 const (
 	// !nashtsai! following level also match syslog.Priority value
-	LOG_UNKNOWN LogLevel = iota - 2
-	LOG_OFF     LogLevel = iota - 1
-	LOG_ERR     LogLevel = iota + 3
+	LOG_DEBUG LogLevel = iota
+	LOG_INFO
 	LOG_WARNING
-	LOG_INFO LogLevel = iota + 6
-	LOG_DEBUG
+	LOG_ERR
+	LOG_OFF
+	LOG_UNKNOWN
 )
 
 // logger interface
