@@ -14,17 +14,17 @@ const (
 
 // logger interface
 type ILogger interface {
-	Debug(v ...interface{}) (err error)
-	Debugf(format string, v ...interface{}) (err error)
-	Err(v ...interface{}) (err error)
-	Errf(format string, v ...interface{}) (err error)
-	Info(v ...interface{}) (err error)
-	Infof(format string, v ...interface{}) (err error)
-	Warning(v ...interface{}) (err error)
-	Warningf(format string, v ...interface{}) (err error)
+	Debug(v ...interface{})
+	Debugf(format string, v ...interface{})
+	Error(v ...interface{})
+	Errorf(format string, v ...interface{})
+	Info(v ...interface{})
+	Infof(format string, v ...interface{})
+	Warn(v ...interface{})
+	Warnf(format string, v ...interface{})
 
 	Level() LogLevel
-	SetLevel(l LogLevel) (err error)
+	SetLevel(l LogLevel)
 
 	ShowSQL(show ...bool)
 	IsShowSQL() bool
