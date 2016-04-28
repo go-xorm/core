@@ -237,6 +237,7 @@ var (
 	PtrTimeType = reflect.PtrTo(TimeType)
 )
 
+// Type2SQLType generate SQLType acorrding Go's type
 func Type2SQLType(t reflect.Type) (st SQLType) {
 	switch k := t.Kind(); k {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
@@ -267,36 +268,9 @@ func Type2SQLType(t reflect.Type) (st SQLType) {
 			st = SQLType{Text, 0, 0}
 		}
 	case reflect.Ptr:
-		st, _ = ptrType2SQLType(t)
+		st = Type2SQLType(t.Elem())
 	default:
 		st = SQLType{Text, 0, 0}
-	}
-	return
-}
-
-func ptrType2SQLType(t reflect.Type) (st SQLType, has bool) {
-	has = true
-
-	switch t {
-	case reflect.TypeOf(&c_EMPTY_STRING):
-		st = SQLType{Varchar, 255, 0}
-		return
-	case reflect.TypeOf(&c_BOOL_DEFAULT):
-		st = SQLType{Bool, 0, 0}
-	case reflect.TypeOf(&c_COMPLEX64_DEFAULT), reflect.TypeOf(&c_COMPLEX128_DEFAULT):
-		st = SQLType{Varchar, 64, 0}
-	case reflect.TypeOf(&c_FLOAT32_DEFAULT):
-		st = SQLType{Float, 0, 0}
-	case reflect.TypeOf(&c_FLOAT64_DEFAULT):
-		st = SQLType{Double, 0, 0}
-	case reflect.TypeOf(&c_INT64_DEFAULT), reflect.TypeOf(&c_UINT64_DEFAULT):
-		st = SQLType{BigInt, 0, 0}
-	case reflect.TypeOf(&c_TIME_DEFAULT):
-		st = SQLType{DateTime, 0, 0}
-	case reflect.TypeOf(&c_INT_DEFAULT), reflect.TypeOf(&c_INT32_DEFAULT), reflect.TypeOf(&c_INT8_DEFAULT), reflect.TypeOf(&c_INT16_DEFAULT), reflect.TypeOf(&c_UINT_DEFAULT), reflect.TypeOf(&c_UINT32_DEFAULT), reflect.TypeOf(&c_UINT8_DEFAULT), reflect.TypeOf(&c_UINT16_DEFAULT):
-		st = SQLType{Int, 0, 0}
-	default:
-		has = false
 	}
 	return
 }
