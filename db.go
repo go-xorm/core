@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"sync"
@@ -15,12 +16,19 @@ func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
 		return "", []interface{}{}, ErrNoMapPointer
 	}
 
-	args := make([]interface{}, 0)
+	args := make([]interface{}, 0, len(vv.Elem().MapKeys()))
+	var err error
 	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		args = append(args, vv.Elem().MapIndex(reflect.ValueOf(src[1:])).Interface())
+		v := vv.Elem().MapIndex(reflect.ValueOf(src[1:]))
+		if !v.IsValid() {
+			err = fmt.Errorf("map key %s is missing", src[1:])
+		} else {
+			args = append(args, v.Interface())
+		}
 		return "?"
 	})
-	return query, args, nil
+
+	return query, args, err
 }
 
 func StructToSlice(query string, st interface{}) (string, []interface{}, error) {
