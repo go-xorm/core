@@ -139,11 +139,7 @@ func (row *Row) Scan(dest ...interface{}) error {
 		return err
 	}
 	// Make sure the query can be processed to completion with no errors.
-	if err := row.rows.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return row.rows.Close()
 }
 
 func (row *Row) ScanStructByName(dest interface{}) error {
@@ -156,7 +152,12 @@ func (row *Row) ScanStructByName(dest interface{}) error {
 		}
 		return sql.ErrNoRows
 	}
-	return row.rows.ScanStructByName(dest)
+	err := row.rows.ScanStructByName(dest)
+	if err != nil {
+		return err
+	}
+	// Make sure the query can be processed to completion with no errors.
+	return row.rows.Close()
 }
 
 func (row *Row) ScanStructByIndex(dest interface{}) error {
@@ -169,7 +170,12 @@ func (row *Row) ScanStructByIndex(dest interface{}) error {
 		}
 		return sql.ErrNoRows
 	}
-	return row.rows.ScanStructByIndex(dest)
+	err := row.rows.ScanStructByIndex(dest)
+	if err != nil {
+		return err
+	}
+	// Make sure the query can be processed to completion with no errors.
+	return row.rows.Close()
 }
 
 // scan data to a slice's pointer, slice's length should equal to columns' number
@@ -183,7 +189,13 @@ func (row *Row) ScanSlice(dest interface{}) error {
 		}
 		return sql.ErrNoRows
 	}
-	return row.rows.ScanSlice(dest)
+	err := row.rows.ScanSlice(dest)
+	if err != nil {
+		return err
+	}
+
+	// Make sure the query can be processed to completion with no errors.
+	return row.rows.Close()
 }
 
 // scan data to a map's pointer
@@ -197,7 +209,13 @@ func (row *Row) ScanMap(dest interface{}) error {
 		}
 		return sql.ErrNoRows
 	}
-	return row.rows.ScanMap(dest)
+	err := row.rows.ScanMap(dest)
+	if err != nil {
+		return err
+	}
+
+	// Make sure the query can be processed to completion with no errors.
+	return row.rows.Close()
 }
 
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
