@@ -257,6 +257,20 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 	}
 	sql += ")"
 
+<<<<<<< HEAD
+	sql = sql[:len(sql)-2] + ")"
+
+	// By hzm
+	b.Logger.Info("[Inherits]", table.Inherits, b.DriverName())
+	lInherits := table.Inherits
+	if len(lInherits) > 0 && strings.EqualFold(b.DriverName(), "postgres") {
+		sql += "INHERITS  ( "
+		sql += strings.Join(lInherits, ",")
+		sql += " ) "
+	}
+
+=======
+>>>>>>> refs/remotes/go-xorm/master
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}
@@ -287,16 +301,16 @@ func (b *Base) LogSQL(sql string, args []interface{}) {
 }
 
 var (
-	dialects = map[DbType]func() Dialect{}
+	dialects = map[DbType]Dialect{}
 )
 
-func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
-	if dialectFunc == nil {
+func RegisterDialect(dbName DbType, dialect Dialect) {
+	if dialect == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
+	dialects[dbName] = dialect // !nashtsai! allow override dialect
 }
 
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]()
+	return dialects[dbName]
 }
