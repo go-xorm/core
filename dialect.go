@@ -290,6 +290,7 @@ var (
 	dialects = map[DbType]func() Dialect{}
 )
 
+// RegisterDialect register database dialect
 func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
 	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
@@ -297,6 +298,10 @@ func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
 	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
 }
 
+// QueryDialect query if registed database dialect
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]()
+	if d, ok := dialects[dbName]; ok {
+		return d()
+	}
+	return nil
 }
