@@ -13,6 +13,13 @@ const (
 	ONLYFROMDB
 )
 
+type AssociateType int
+
+const (
+	AssociateNone AssociateType = iota
+	AssociateBelongsTo
+)
+
 // Column defines database column
 type Column struct {
 	Name            string
@@ -39,6 +46,8 @@ type Column struct {
 	DisableTimeZone bool
 	TimeZone        *time.Location // column specified time zone
 	Comment         string
+	AssociateType
+	AssociateTable *Table
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
@@ -63,6 +72,8 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),
 		Comment:         "",
+		AssociateType:   AssociateNone,
+		AssociateTable:  nil,
 	}
 }
 
