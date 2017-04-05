@@ -25,6 +25,7 @@ type Column struct {
 	Name            string
 	TableName       string
 	FieldName       string
+	FieldType       reflect.Type
 	SQLType         SQLType
 	IsJSON          bool
 	Length          int
