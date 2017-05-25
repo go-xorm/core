@@ -16,7 +16,7 @@ const (
 // database column
 type Column struct {
 	Name            string
-	TableName       string
+	TableNames      []string
 	FieldName       string
 	SQLType         SQLType
 	Length          int
@@ -43,7 +43,7 @@ type Column struct {
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
 	return &Column{
 		Name:            name,
-		TableName:       "",
+		TableNames:      nil,
 		FieldName:       fieldName,
 		SQLType:         sqlType,
 		Length:          len1,
