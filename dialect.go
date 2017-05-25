@@ -57,7 +57,9 @@ type Dialect interface {
 
 	IsColumnExist(tableName string, colName string) (bool, error)
 
-	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
+	CreateTableSql(table *Table, tableName, storeEngine, charset string) (string)
+	AlterIncrementSql(table *Table, tableName, storeEngine, charset string) (string)
+
 	DropTableSql(tableName string) string
 	CreateIndexSql(tableName string, index *Index) string
 	DropIndexSql(tableName string, index *Index) string
@@ -223,8 +225,10 @@ func (db *Base) ModifyColumnSql(tableName string, col *Column) string {
 	return fmt.Sprintf("alter table %s MODIFY COLUMN %s", tableName, col.StringNoPk(db.dialect))
 }
 
-func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) string {
+
+func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset string) (string) {
 	var sql string
+	var startwith int64
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
 		tableName = table.Name
@@ -244,7 +248,15 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 				sql += col.StringNoPk(b.dialect)
 			}
 			sql = strings.TrimSpace(sql)
+			if (len(col.Comment)>0){
+				sql+=fmt.Sprintf(" comment '%s'",col.Comment)
+			}
 			sql += ", "
+
+
+			if col.IsAutoIncrement{
+				startwith=col.StartWith
+			}
 		}
 
 		if len(pkList) > 1 {
@@ -254,8 +266,14 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		}
 
 		sql = sql[:len(sql)-2]
+
+
 	}
 	sql += ")"
+	//fmt.Println(table.AutoIncrement)
+	if len(table.AutoIncrement)>0{
+		sql+=fmt.Sprintf("AUTO_INCREMENT=%d",startwith)
+	}
 
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
@@ -269,6 +287,26 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		}
 	}
 
+
+	return sql
+}
+
+func (b *Base) AlterIncrementSql(table *Table, tableName, storeEngine, charset string) (string) {
+	var sql string
+	var startwith int64
+	sql=""
+	if tableName == "" {
+		tableName = table.Name
+	}
+	if len(table.ColumnsSeq()) > 0 {
+		for _, colName := range table.ColumnsSeq() {
+			col := table.GetColumn(colName)
+			if col.IsAutoIncrement&&col.IsPrimaryKey{
+				startwith=col.StartWith
+				sql=fmt.Sprintf("alter table %s AUTO_INCREMENT=%d",tableName,startwith)
+			}
+		}
+	}
 	return sql
 }
 

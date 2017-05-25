@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"strconv"
 )
 
 const (
@@ -26,6 +27,7 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
+	StartWith       int64
 	MapType         int
 	IsCreated       bool
 	IsUpdated       bool
@@ -36,6 +38,7 @@ type Column struct {
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
 	DisableTimeZone bool
+	Comment string
 	TimeZone        *time.Location // column specified time zone
 }
 
@@ -52,6 +55,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		Indexes:         make(map[string]int),
 		IsPrimaryKey:    false,
 		IsAutoIncrement: false,
+		StartWith:1,
 		MapType:         TWOSIDES,
 		IsCreated:       false,
 		IsUpdated:       false,
@@ -59,6 +63,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		IsCascade:       false,
 		IsVersion:       false,
 		DefaultIsEmpty:  false,
+		Comment:"",
 		EnumOptions:     make(map[string]int),
 	}
 }
@@ -71,9 +76,17 @@ func (col *Column) String(d Dialect) string {
 
 	if col.IsPrimaryKey {
 		sql += "PRIMARY KEY "
+		if (d.DBType()==MSSQL){
 		if col.IsAutoIncrement {
-			sql += d.AutoIncrStr() + " "
+			sql+=d.AutoIncrStr() + " ("+strconv.FormatInt(col.StartWith,10)+",1)"
+			}
+		}else{
+			sql+=d.AutoIncrStr()+" "
 		}
+	}
+
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
 	}
 
 	if d.ShowCreateNull() {
@@ -84,9 +97,6 @@ func (col *Column) String(d Dialect) string {
 		}
 	}
 
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
-	}
 
 	return sql
 }
@@ -96,6 +106,10 @@ func (col *Column) StringNoPk(d Dialect) string {
 
 	sql += d.SqlType(col) + " "
 
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
+	}
+
 	if d.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
@@ -104,9 +118,7 @@ func (col *Column) StringNoPk(d Dialect) string {
 		}
 	}
 
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
-	}
+
 
 	return sql
 }
@@ -118,6 +130,7 @@ func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 }
 
 func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
+
 	var fieldValue reflect.Value
 	fieldPath := strings.Split(col.FieldName, ".")
 
