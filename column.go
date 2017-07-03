@@ -113,7 +113,7 @@ func (col *Column) StringNoPk(d Dialect) string {
 	return sql
 }
 
-// return col's filed of struct's value
+// ValueOf return col's filed of struct's value
 func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 	dataStruct := reflect.Indirect(reflect.ValueOf(bean))
 	return col.ValueOfV(&dataStruct)

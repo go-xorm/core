@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// name translation between struct, fields names and table, column names
+// IMapper defines name translation between struct, fields names and table, column names
 type IMapper interface {
 	Obj2Table(string) string
 	Table2Obj(string) string
@@ -180,7 +180,7 @@ func (mapper GonicMapper) Table2Obj(name string) string {
 	return string(newstr)
 }
 
-// A GonicMapper that contains a list of common initialisms taken from golang/lint
+// LintGonicMapper defines a GonicMapper that contains a list of common initialisms taken from golang/lint
 var LintGonicMapper = GonicMapper{
 	"API":   true,
 	"ASCII": true,
@@ -217,7 +217,7 @@ var LintGonicMapper = GonicMapper{
 	"XSS":   true,
 }
 
-// provide prefix table name support
+// PrefixMapper provides prefix table or column name support
 type PrefixMapper struct {
 	Mapper IMapper
 	Prefix string
@@ -235,7 +235,7 @@ func NewPrefixMapper(mapper IMapper, prefix string) PrefixMapper {
 	return PrefixMapper{mapper, prefix}
 }
 
-// provide suffix table name support
+// SuffixMapper provides suffix table or column name support
 type SuffixMapper struct {
 	Mapper IMapper
 	Suffix string

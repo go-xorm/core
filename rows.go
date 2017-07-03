@@ -30,7 +30,7 @@ func (rs *Rows) ToMapString() ([]map[string]string, error) {
 	return results, nil
 }
 
-// scan data to a struct's pointer according field index
+// ScanStructByIndex scan data to a struct's pointer according field index
 func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 	if len(dest) == 0 {
 		return errors.New("at least one struct")
@@ -90,7 +90,7 @@ func fieldByName(v reflect.Value, name string) reflect.Value {
 	return reflect.Zero(t)
 }
 
-// scan data to a struct's pointer according field name
+// ScanStructByName scan data to a struct's pointer according field name
 func (rs *Rows) ScanStructByName(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
@@ -116,37 +116,7 @@ func (rs *Rows) ScanStructByName(dest interface{}) error {
 	return rs.Rows.Scan(newDest...)
 }
 
-type cacheStruct struct {
-	value reflect.Value
-	idx   int
-}
-
-var (
-	reflectCache      = make(map[reflect.Type]*cacheStruct)
-	reflectCacheMutex sync.RWMutex
-)
-
-func ReflectNew(typ reflect.Type) reflect.Value {
-	reflectCacheMutex.RLock()
-	cs, ok := reflectCache[typ]
-	reflectCacheMutex.RUnlock()
-
-	const newSize = 200
-
-	if !ok || cs.idx+1 > newSize-1 {
-		cs = &cacheStruct{reflect.MakeSlice(reflect.SliceOf(typ), newSize, newSize), 0}
-		reflectCacheMutex.Lock()
-		reflectCache[typ] = cs
-		reflectCacheMutex.Unlock()
-	} else {
-		reflectCacheMutex.Lock()
-		cs.idx = cs.idx + 1
-		reflectCacheMutex.Unlock()
-	}
-	return cs.value.Index(cs.idx).Addr()
-}
-
-// scan data to a slice's pointer, slice's length should equal to columns' number
+// ScanSlice scan data to a slice's pointer, slice's length should equal to columns' number
 func (rs *Rows) ScanSlice(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Slice {
@@ -160,7 +130,6 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 	}
 
 	newDest := make([]interface{}, len(cols))
-
 	for j := 0; j < len(cols); j++ {
 		if j >= vvv.Len() {
 			newDest[j] = reflect.New(vvv.Type().Elem()).Interface()
@@ -181,7 +150,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 	return nil
 }
 
-// scan data to a map's pointer
+// ScanMap scan data to a map's pointer
 func (rs *Rows) ScanMap(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
@@ -196,10 +165,10 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	newDest := make([]interface{}, len(cols))
 	vvv := vv.Elem()
 
+	sl := reflect.MakeSlice(reflect.SliceOf(vvv.Type().Elem()), len(cols), len(cols))
+
 	for i, _ := range cols {
-		newDest[i] = ReflectNew(vvv.Type().Elem()).Interface()
-		//v := reflect.New(vvv.Type().Elem())
-		//newDest[i] = v.Interface()
+		newDest[i] = sl.Index(i).Addr()
 	}
 
 	err = rs.Rows.Scan(newDest...)
@@ -215,32 +184,7 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	return nil
 }
 
-/*func (rs *Rows) ScanMap(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return errors.New("dest should be a map's pointer")
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-	err = rs.ScanSlice(newDest)
-	if err != nil {
-		return err
-	}
-
-	vvv := vv.Elem()
-
-	for i, name := range cols {
-		vname := reflect.ValueOf(name)
-		vvv.SetMapIndex(vname, reflect.ValueOf(newDest[i]).Elem())
-	}
-
-	return nil
-}*/
+// Row is one row
 type Row struct {
 	rows *Rows
 	// One of these two will be non-nil:
@@ -320,7 +264,7 @@ func (row *Row) ScanStructByIndex(dest interface{}) error {
 	return row.rows.Close()
 }
 
-// scan data to a slice's pointer, slice's length should equal to columns' number
+// ScanSlice scan data to a slice's pointer, slice's length should equal to columns' number
 func (row *Row) ScanSlice(dest interface{}) error {
 	if row.err != nil {
 		return row.err
@@ -342,7 +286,7 @@ func (row *Row) ScanSlice(dest interface{}) error {
 	return row.rows.Close()
 }
 
-// scan data to a map's pointer
+// ScanMap scan data to a map's pointer
 func (row *Row) ScanMap(dest interface{}) error {
 	if row.err != nil {
 		return row.err

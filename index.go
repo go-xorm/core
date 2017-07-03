@@ -6,12 +6,13 @@ import (
 	"strings"
 )
 
+// database index types
 const (
 	IndexType = iota + 1
 	UniqueType
 )
 
-// database index
+// Index describes database index
 type Index struct {
 	IsRegular bool
 	Name      string
@@ -30,7 +31,7 @@ func (index *Index) XName(tableName string) string {
 	return index.Name
 }
 
-// add columns which will be composite index
+// AddColumn adds columns which will be composite index
 func (index *Index) AddColumn(cols ...string) {
 	for _, col := range cols {
 		index.Cols = append(index.Cols, col)
@@ -55,7 +56,7 @@ func (index *Index) Equal(dst *Index) bool {
 	return true
 }
 
-// new an index
+// NewIndex returns an index
 func NewIndex(name string, indexType int) *Index {
 	return &Index{true, name, indexType, make([]string, 0)}
 }

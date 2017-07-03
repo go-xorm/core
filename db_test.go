@@ -595,7 +595,8 @@ func TestExecStruct(t *testing.T) {
 		t.Error(err)
 	}
 
-	user := User{Name: "xlw",
+	user := User{
+		Name:     "xlw",
 		Title:    "tester",
 		Age:      1.2,
 		Alias:    "lunny",
