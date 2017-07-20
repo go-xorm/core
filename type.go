@@ -117,9 +117,9 @@ var (
 		Integer:   NUMERIC_TYPE,
 		BigInt:    NUMERIC_TYPE,
 
-		Enum:  TEXT_TYPE,
-		Set:   TEXT_TYPE,
-		Json:  TEXT_TYPE,
+		Enum: TEXT_TYPE,
+		Set:  TEXT_TYPE,
+		//Json:  TEXT_TYPE,
 		Jsonb: TEXT_TYPE,
 
 		Char:       TEXT_TYPE,

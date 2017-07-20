@@ -13,12 +13,13 @@ const (
 	ONLYFROMDB
 )
 
-// database column
+// Column defines database column
 type Column struct {
 	Name            string
 	TableName       string
 	FieldName       string
 	SQLType         SQLType
+	IsJSON          bool
 	Length          int
 	Length2         int
 	Nullable        bool
