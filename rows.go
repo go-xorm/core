@@ -254,6 +254,11 @@ func ErrorRow(err error) *Row {
 	}
 }
 
+// NewRow from rows
+func NewRow(rows *Rows, err error) *Row {
+	return &Row{rows, err}
+}
+
 func (row *Row) Columns() ([]string, error) {
 	if row.err != nil {
 		return nil, row.err
