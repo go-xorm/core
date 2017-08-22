@@ -247,6 +247,13 @@ type Row struct {
 	err error // deferred error for easy chaining
 }
 
+// ErrorRow return an error row
+func ErrorRow(err error) *Row {
+	return &Row{
+		err: err,
+	}
+}
+
 func (row *Row) Columns() ([]string, error) {
 	if row.err != nil {
 		return nil, row.err
