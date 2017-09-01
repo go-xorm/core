@@ -163,7 +163,7 @@ var (
 	uintTypes = sort.StringSlice{"*uint", "*uint16", "*uint32", "*uint8"}
 )
 
-// !nashtsai! treat following var as interal const values, these are used for reflect.TypeOf comparision
+// !nashtsai! treat following var as interal const values, these are used for reflect.TypeOf comparison
 var (
 	c_EMPTY_STRING       string
 	c_BOOL_DEFAULT       bool
