@@ -100,7 +100,8 @@ var (
 	LongBlob   = "LONGBLOB"
 	Bytea      = "BYTEA"
 
-	Bool = "BOOL"
+	Bool    = "BOOL"
+	Boolean = "BOOLEAN"
 
 	Serial    = "SERIAL"
 	BigSerial = "BIGSERIAL"
