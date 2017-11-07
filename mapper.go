@@ -108,6 +108,10 @@ func titleCasedName(name string) string {
 		case chr == '_':
 			upNextChar = true
 			continue
+		//支持中横线
+		case chr == '-':
+			upNextChar = true
+			continue
 		}
 
 		newstr = append(newstr, chr)
