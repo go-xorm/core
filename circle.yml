@@ -1,14 +1,32 @@
-dependencies:
-  override:
-    # './...' is a relative pattern which means all subdirectories
-    - go get -t -d -v ./...
-    - go build -v
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.8
+      - image: circleci/mysql:latest
+        environment:
+          - MYSQL_ALLOW_EMPTY_PASSWORD=true
+          - MYSQL_DATABASE=core_test
+          - MYSQL_USER=root
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
 
-database:
-  override:
-    - mysql -u root -e "CREATE DATABASE core_test DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
-    
-test:
-  override:
-    # './...' is a relative pattern which means all subdirectories
-    - go test -v -race
+    #### TEMPLATE_NOTE: go expects specific checkout path representing url
+    #### expecting it in the form of
+    ####   /go/src/github.com/circleci/go-tool
+    ####   /go/src/bitbucket.org/circleci/go-tool
+    working_directory: /go/src/github.com/go-xorm/{{REPO_NAME}}
+    steps:
+      - checkout
+
+      # specify any bash command here prefixed with `run: `
+      - run: go get -v -t -d ./...
+      - run: go build -v 
+      - run: go test -v -race ./...
