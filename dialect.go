@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -151,9 +152,9 @@ func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
 
-func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
+func (db *Base) HasRecords(ctx context.Context, query string, args ...interface{}) (bool, error) {
 	db.LogSQL(query, args)
-	rows, err := db.DB().Query(query, args...)
+	rows, err := db.DB().Query(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -165,10 +166,10 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	return false, nil
 }
 
-func (db *Base) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *Base) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
 	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
-	return db.HasRecords(query, db.DbName, tableName, colName)
+	return db.HasRecords(ctx, query, db.DbName, tableName, colName)
 }
 
 /*

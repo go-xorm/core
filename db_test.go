@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -76,7 +77,7 @@ func BenchmarkOriQuery(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -121,7 +122,7 @@ func BenchmarkStructQuery(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -167,7 +168,7 @@ func BenchmarkStruct2Query(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -212,7 +213,7 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -315,7 +316,7 @@ func BenchmarkSliceStringQuery(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -366,7 +367,7 @@ func BenchmarkMapInterfaceQuery(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		rows, err := db.Query("select * from user")
+		rows, err := db.Query(context.Background(), "select * from user")
 		if err != nil {
 			b.Error(err)
 		}
@@ -531,7 +532,7 @@ func BenchmarkExecMap(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err = db.ExecMap("insert into user (`name`, title, age, alias, nick_name, created) "+
+		_, err = db.ExecMap(context.Background(), "insert into user (`name`, title, age, alias, nick_name, created) "+
 			"values (?name,?title,?age,?alias,?nick_name,?created)",
 			&mp)
 		if err != nil {
@@ -561,14 +562,14 @@ func TestExecMap(t *testing.T) {
 		"created":   time.Now(),
 	}
 
-	_, err = db.ExecMap("insert into user (`name`, title, age, alias, nick_name,created) "+
+	_, err = db.ExecMap(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) "+
 		"values (?name,?title,?age,?alias,?nick_name,?created)",
 		&mp)
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := db.Query("select * from user")
+	rows, err := db.Query(context.Background(), "select * from user")
 	if err != nil {
 		t.Error(err)
 	}
@@ -603,14 +604,14 @@ func TestExecStruct(t *testing.T) {
 		Created:  NullTime(time.Now()),
 	}
 
-	_, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) "+
+	_, err = db.ExecStruct(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) "+
 		"values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
 		&user)
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := db.QueryStruct("select * from user where `name` = ?Name", &user)
+	rows, err := db.QueryStruct(context.Background(), "select * from user where `name` = ?Name", &user)
 	if err != nil {
 		t.Error(err)
 	}
@@ -633,7 +634,7 @@ func BenchmarkExecStruct(b *testing.B) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(createTableSql)
+	_, err = db.ExecContext(context.Background(), createTableSql)
 	if err != nil {
 		b.Error(err)
 	}
@@ -649,7 +650,7 @@ func BenchmarkExecStruct(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) "+
+		_, err = db.ExecStruct(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) "+
 			"values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
 			&user)
 		if err != nil {
