@@ -56,7 +56,7 @@ type Dialect interface {
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
 
-	IsColumnExist(tableName string, colName string) (bool, error)
+	IsColumnExist(ctx context.Context, tableName string, colName string) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	DropTableSql(tableName string) string
@@ -70,9 +70,9 @@ type Dialect interface {
 	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
 	//MustDropTable(tableName string) error
 
-	GetColumns(tableName string) ([]string, map[string]*Column, error)
-	GetTables() ([]*Table, error)
-	GetIndexes(tableName string) (map[string]*Index, error)
+	GetColumns(ctx context.Context, tableName string) ([]string, map[string]*Column, error)
+	GetTables(ctx context.Context) ([]*Table, error)
+	GetIndexes(ctx context.Context, tableName string) (map[string]*Index, error)
 
 	Filters() []Filter
 }
