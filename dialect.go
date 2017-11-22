@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -55,7 +56,7 @@ type Dialect interface {
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
 
-	IsColumnExist(tableName string, colName string) (bool, error)
+	IsColumnExist(ctx context.Context, tableName string, colName string) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	DropTableSql(tableName string) string
@@ -69,9 +70,9 @@ type Dialect interface {
 	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
 	//MustDropTable(tableName string) error
 
-	GetColumns(tableName string) ([]string, map[string]*Column, error)
-	GetTables() ([]*Table, error)
-	GetIndexes(tableName string) (map[string]*Index, error)
+	GetColumns(ctx context.Context, tableName string) ([]string, map[string]*Column, error)
+	GetTables(ctx context.Context) ([]*Table, error)
+	GetIndexes(ctx context.Context, tableName string) (map[string]*Index, error)
 
 	Filters() []Filter
 }
@@ -151,9 +152,9 @@ func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
 
-func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
+func (db *Base) HasRecords(ctx context.Context, query string, args ...interface{}) (bool, error) {
 	db.LogSQL(query, args)
-	rows, err := db.DB().Query(query, args...)
+	rows, err := db.DB().Query(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -165,10 +166,10 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	return false, nil
 }
 
-func (db *Base) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *Base) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
 	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
-	return db.HasRecords(query, db.DbName, tableName, colName)
+	return db.HasRecords(ctx, query, db.DbName, tableName, colName)
 }
 
 /*
