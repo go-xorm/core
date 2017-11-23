@@ -8,83 +8,70 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
-func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
-	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return "", []interface{}{}, ErrNoMapPointer
+var (
+	re = regexp.MustCompile(`[?](\w+)`)
+)
+
+type Option func(*DB)
+
+func CacheMapperOption(im IMapper) Option {
+	return func(db *DB) {
+		db.Mapper = im
 	}
-
-	args := make([]interface{}, 0, len(vv.Elem().MapKeys()))
-	var err error
-	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		v := vv.Elem().MapIndex(reflect.ValueOf(src[1:]))
-		if !v.IsValid() {
-			err = fmt.Errorf("map key %s is missing", src[1:])
-		} else {
-			args = append(args, v.Interface())
-		}
-		return "?"
-	})
-
-	return query, args, err
 }
 
-func StructToSlice(query string, st interface{}) (string, []interface{}, error) {
-	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return "", []interface{}{}, ErrNoStructPointer
+func TraceOption(enable bool) Option {
+	return func(db *DB) {
+		db.enableTrace = enable
 	}
-
-	args := make([]interface{}, 0)
-	var err error
-	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		fv := vv.Elem().FieldByName(src[1:]).Interface()
-		if v, ok := fv.(driver.Valuer); ok {
-			var value driver.Value
-			value, err = v.Value()
-			if err != nil {
-				return "?"
-			}
-			args = append(args, value)
-		} else {
-			args = append(args, fv)
-		}
-		return "?"
-	})
-	if err != nil {
-		return "", []interface{}{}, err
-	}
-	return query, args, nil
 }
 
 type DB struct {
 	*sql.DB
-	Mapper IMapper
+	Mapper      IMapper
+	enableTrace bool
 }
 
-func Open(driverName, dataSourceName string) (*DB, error) {
+func Open(driverName, dataSourceName string, opts ...Option) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}, nil
+	return FromDB(db, opts...), nil
 }
 
-func FromDB(db *sql.DB) *DB {
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}
+func FromDB(db *sql.DB, opts ...Option) *DB {
+	xdb := &DB{DB: db, Mapper: NewCacheMapper(&SnakeMapper{})}
+	for _, opt := range opts {
+		opt(xdb)
+	}
+	return xdb
 }
 
 func (db *DB) Query(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
+	if db.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
+
 	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		if rows != nil {
-			rows.Close()
-		}
 		return nil, err
 	}
 	return &Rows{rows, db.Mapper}, nil
+}
+
+func (db *DB) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if db.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
+
+	return db.DB.ExecContext(ctx, query, args...)
 }
 
 func (db *DB) QueryMap(ctx context.Context, query string, mp interface{}) (*Rows, error) {
@@ -129,8 +116,9 @@ func (db *DB) QueryRowStruct(ctx context.Context, query string, st interface{}) 
 
 type Stmt struct {
 	*sql.Stmt
-	Mapper IMapper
-	names  map[string]int
+	Mapper      IMapper
+	names       map[string]int
+	enableTrace bool
 }
 
 func (db *DB) Prepare(ctx context.Context, query string) (*Stmt, error) {
@@ -142,11 +130,24 @@ func (db *DB) Prepare(ctx context.Context, query string) (*Stmt, error) {
 		return "?"
 	})
 
+	if db.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
 	stmt, err := db.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{stmt, db.Mapper, names}, nil
+	return &Stmt{stmt, db.Mapper, names, db.enableTrace}, nil
+}
+
+func (s *Stmt) Exec(ctx context.Context, args ...interface{}) (sql.Result, error) {
+	if s.enableTrace {
+		span := newClientSpanFromContext(ctx, "Stmt Exec")
+		defer span.Finish()
+	}
+
+	return s.Stmt.ExecContext(ctx, args...)
 }
 
 func (s *Stmt) ExecMap(ctx context.Context, mp interface{}) (sql.Result, error) {
@@ -159,7 +160,7 @@ func (s *Stmt) ExecMap(ctx context.Context, mp interface{}) (sql.Result, error) 
 	for k, i := range s.names {
 		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
 	}
-	return s.Stmt.ExecContext(ctx, args...)
+	return s.Exec(ctx, args...)
 }
 
 func (s *Stmt) ExecStruct(ctx context.Context, st interface{}) (sql.Result, error) {
@@ -172,10 +173,15 @@ func (s *Stmt) ExecStruct(ctx context.Context, st interface{}) (sql.Result, erro
 	for k, i := range s.names {
 		args[i] = vv.Elem().FieldByName(k).Interface()
 	}
-	return s.Stmt.ExecContext(ctx, args...)
+	return s.Exec(ctx, args...)
 }
 
 func (s *Stmt) Query(ctx context.Context, args ...interface{}) (*Rows, error) {
+	if s.enableTrace {
+		span := newClientSpanFromContext(ctx, "Stmt Query")
+		defer span.Finish()
+	}
+
 	rows, err := s.Stmt.QueryContext(ctx, args...)
 	if err != nil {
 		return nil, err
@@ -244,10 +250,6 @@ func (s *Stmt) QueryRowStruct(ctx context.Context, st interface{}) *Row {
 	return s.QueryRow(ctx, args...)
 }
 
-var (
-	re = regexp.MustCompile(`[?](\w+)`)
-)
-
 // insert into (name) values (?)
 // insert into (name) values (?name)
 func (db *DB) ExecMap(ctx context.Context, query string, mp interface{}) (sql.Result, error) {
@@ -255,7 +257,8 @@ func (db *DB) ExecMap(ctx context.Context, query string, mp interface{}) (sql.Re
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.ExecContext(ctx, query, args...)
+
+	return db.Exec(ctx, query, args...)
 }
 
 func (db *DB) ExecStruct(ctx context.Context, query string, st interface{}) (sql.Result, error) {
@@ -263,7 +266,7 @@ func (db *DB) ExecStruct(ctx context.Context, query string, st interface{}) (sql
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.ExecContext(ctx, query, args...)
+	return db.Exec(ctx, query, args...)
 }
 
 type EmptyScanner struct {
@@ -275,7 +278,8 @@ func (EmptyScanner) Scan(src interface{}) error {
 
 type Tx struct {
 	*sql.Tx
-	Mapper IMapper
+	Mapper      IMapper
+	enableTrace bool
 }
 
 func (db *DB) Begin() (*Tx, error) {
@@ -283,7 +287,7 @@ func (db *DB) Begin() (*Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Tx{tx, db.Mapper}, nil
+	return &Tx{tx, db.Mapper, db.enableTrace}, nil
 }
 
 func (tx *Tx) Prepare(ctx context.Context, query string) (*Stmt, error) {
@@ -295,11 +299,16 @@ func (tx *Tx) Prepare(ctx context.Context, query string) (*Stmt, error) {
 		return "?"
 	})
 
+	if tx.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
+
 	stmt, err := tx.Tx.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{stmt, tx.Mapper, names}, nil
+	return &Stmt{stmt, tx.Mapper, names, tx.enableTrace}, nil
 }
 
 func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
@@ -307,12 +316,21 @@ func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
 	return stmt
 }
 
+func (tx *Tx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if tx.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
+
+	return tx.Tx.ExecContext(ctx, query, args...)
+}
+
 func (tx *Tx) ExecMap(ctx context.Context, query string, mp interface{}) (sql.Result, error) {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
 		return nil, err
 	}
-	return tx.Tx.ExecContext(ctx, query, args...)
+	return tx.Exec(ctx, query, args...)
 }
 
 func (tx *Tx) ExecStruct(ctx context.Context, query string, st interface{}) (sql.Result, error) {
@@ -320,10 +338,15 @@ func (tx *Tx) ExecStruct(ctx context.Context, query string, st interface{}) (sql
 	if err != nil {
 		return nil, err
 	}
-	return tx.Tx.ExecContext(ctx, query, args...)
+	return tx.Exec(ctx, query, args...)
 }
 
 func (tx *Tx) Query(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
+	if tx.enableTrace {
+		span := newClientSpanFromContext(ctx, query)
+		defer span.Finish()
+	}
+
 	rows, err := tx.Tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -366,4 +389,62 @@ func (tx *Tx) QueryRowStruct(ctx context.Context, query string, st interface{}) 
 		return &Row{nil, err}
 	}
 	return tx.QueryRow(ctx, query, args...)
+}
+
+func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
+	vv := reflect.ValueOf(mp)
+	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+		return "", []interface{}{}, ErrNoMapPointer
+	}
+
+	args := make([]interface{}, 0, len(vv.Elem().MapKeys()))
+	var err error
+	query = re.ReplaceAllStringFunc(query, func(src string) string {
+		v := vv.Elem().MapIndex(reflect.ValueOf(src[1:]))
+		if !v.IsValid() {
+			err = fmt.Errorf("map key %s is missing", src[1:])
+		} else {
+			args = append(args, v.Interface())
+		}
+		return "?"
+	})
+
+	return query, args, err
+}
+
+func StructToSlice(query string, st interface{}) (string, []interface{}, error) {
+	vv := reflect.ValueOf(st)
+	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+		return "", []interface{}{}, ErrNoStructPointer
+	}
+
+	args := make([]interface{}, 0)
+	var err error
+	query = re.ReplaceAllStringFunc(query, func(src string) string {
+		fv := vv.Elem().FieldByName(src[1:]).Interface()
+		if v, ok := fv.(driver.Valuer); ok {
+			var value driver.Value
+			value, err = v.Value()
+			if err != nil {
+				return "?"
+			}
+			args = append(args, value)
+		} else {
+			args = append(args, fv)
+		}
+		return "?"
+	})
+	if err != nil {
+		return "", []interface{}{}, err
+	}
+	return query, args, nil
+}
+
+func newClientSpanFromContext(ctx context.Context, query string) opentracing.Span {
+	var parentSpanContext opentracing.SpanContext
+	if parent := opentracing.SpanFromContext(ctx); parent != nil {
+		parentSpanContext = parent.Context()
+	}
+	// TODO: query length limit
+	return opentracing.StartSpan(query, opentracing.ChildOf(parentSpanContext))
 }
