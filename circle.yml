@@ -1,14 +1,40 @@
-dependencies:
-  override:
-    # './...' is a relative pattern which means all subdirectories
-    - go get -t -d -v ./...
-    - go build -v
-
-database:
-  override:
-    - mysql -u root -e "CREATE DATABASE core_test DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
-    
-test:
-  override:
-    # './...' is a relative pattern which means all subdirectories
-    - go test -v -race
+version: 2
+jobs:
+  go:1.8:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.8
+      - image: circleci/mysql:latest
+        environment:
+          - MYSQL_ALLOW_EMPTY_PASSWORD=true
+          - MYSQL_DATABASE=core_test
+          - MYSQL_USER=root
+    working_directory: /go/src/github.com/go-xorm/core
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run: go build -v
+      - run: go test -v -race --driver=sqlite3 ./...
+      - run: go test -v -race --driver=mysql ./...
+  go:latest:
+    docker:
+      # specify the version
+      - image: circleci/golang:latest
+      - image: circleci/mysql:latest
+        environment:
+          - MYSQL_ALLOW_EMPTY_PASSWORD=true
+          - MYSQL_DATABASE=core_test
+          - MYSQL_USER=root
+    working_directory: /go/src/github.com/go-xorm/core
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run: go build -v
+      - run: go test -v -race --driver=sqlite3 ./...
+      - run: go test -v -race --driver=mysql ./...
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - go:1.8
+      - go:latest

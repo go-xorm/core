@@ -1,6 +1,10 @@
-Core is a lightweight wrapper of sql.DB.
+# Core [![CircleCI](https://circleci.com/gh/micanzhang/core/tree/master.svg?style=svg)](https://circleci.com/gh/micanzhang/core/tree/master)
 
-[![CircleCI](https://circleci.com/gh/go-xorm/core/tree/master.svg?style=svg)](https://circleci.com/gh/go-xorm/core/tree/master)
+Core is a lightweight wrapper of sql.DB, only supports methods with `context.Context` parameter.
+
+# requirments
+
++ go >= 1.8
 
 # Open
 ```Go
@@ -16,7 +20,7 @@ db.SetMapper(SameMapper())
 
 ### Scan
 ```Go
-rows, _ := db.Query()
+rows, _ := db.Query(context.Background())
 for rows.Next() {
     rows.Scan()
 }
@@ -34,7 +38,7 @@ for rows.Next() {
 You can use `[]string`, `[][]byte`, `[]interface{}`, `[]*string`, `[]sql.NullString` to ScanSclice. Notice, slice's length should be equal or less than select columns.
 
 ```Go
-rows, _ := db.Query()
+rows, _ := db.Query(context.Background())
 cols, _ := rows.Columns()
 for rows.Next() {
     var s = make([]string, len(cols))
@@ -43,7 +47,7 @@ for rows.Next() {
 ```
 
 ```Go
-rows, _ := db.Query()
+rows, _ := db.Query(context.Background())
 cols, _ := rows.Columns()
 for rows.Next() {
     var s = make([]*string, len(cols))
@@ -53,7 +57,7 @@ for rows.Next() {
 
 ### ScanStruct
 ```Go
-rows, _ := db.Query()
+rows, _ := db.Query(context.Background())
 for rows.Next() {
     rows.ScanStructByName()
     rows.ScanStructByIndex()
@@ -62,48 +66,48 @@ for rows.Next() {
 
 ## Query usage
 ```Go
-rows, err := db.Query("select * from table where name = ?", name)
+rows, err := db.Query(context.Background(), "select * from table where name = ?", name)
 
 user = User{
     Name:"lunny",
 }
-rows, err := db.QueryStruct("select * from table where name = ?Name",
+rows, err := db.QueryStruct(context.Background(), "select * from table where name = ?Name",
             &user)
 
 var user = map[string]interface{}{
     "name": "lunny",
 }
-rows, err = db.QueryMap("select * from table where name = ?name",
+rows, err = db.QueryMap(context.Background(), "select * from table where name = ?name",
             &user)
 ```
 
 ## QueryRow usage
 ```Go
-row := db.QueryRow("select * from table where name = ?", name)
+row := db.QueryRow(context.Background(), "select * from table where name = ?", name)
 
 user = User{
     Name:"lunny",
 }
-row := db.QueryRowStruct("select * from table where name = ?Name",
+row := db.QueryRowStruct(context.Background(), "select * from table where name = ?Name",
             &user)
 
 var user = map[string]interface{}{
     "name": "lunny",
 }
-row = db.QueryRowMap("select * from table where name = ?name",
+row = db.QueryRowMap(context.Background(), "select * from table where name = ?name",
             &user)
 ```
 
 ## Exec usage
 ```Go
-db.Exec("insert into user (`name`, title, age, alias, nick_name,created) values (?,?,?,?,?,?)", name, title, age, alias...)
+db.Exec(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) values (?,?,?,?,?,?)", name, title, age, alias...)
 
 user = User{
     Name:"lunny",
     Title:"test",
     Age: 18,
 }
-result, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
+result, err = db.ExecStruct(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
             &user)
 
 var user = map[string]interface{}{
@@ -111,6 +115,6 @@ var user = map[string]interface{}{
     "Title": "test",
     "Age": 18,
 }
-result, err = db.ExecMap("insert into user (`name`, title, age, alias, nick_name,created) values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
+result, err = db.ExecMap(context.Background(), "insert into user (`name`, title, age, alias, nick_name,created) values (?Name,?Title,?Age,?Alias,?NickName,?Created)",
             &user)
 ```
