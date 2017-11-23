@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"testing"
@@ -13,8 +14,7 @@ import (
 )
 
 var (
-	//dbtype         string = "sqlite3"
-	dbtype         string = "mysql"
+	dbtype         = flag.String("driver", "sqlite3", "database type")
 	createTableSql string
 )
 
@@ -29,7 +29,8 @@ type User struct {
 }
 
 func init() {
-	switch dbtype {
+	flag.Parse()
+	switch *dbtype {
 	case "sqlite3":
 		createTableSql = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NULL, " +
 			"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
@@ -42,7 +43,7 @@ func init() {
 }
 
 func testOpen() (*DB, error) {
-	switch dbtype {
+	switch *dbtype {
 	case "sqlite3":
 		os.Remove("./test.db")
 		return Open("sqlite3", "./test.db")
