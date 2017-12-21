@@ -2,7 +2,7 @@ package core
 
 import (
 	"errors"
-	"fmt"
+	"flag"
 	"os"
 	"testing"
 	"time"
@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	//dbtype         string = "sqlite3"
-	dbtype         string = "mysql"
+	dbtype         = flag.String("dbtype", "mysql", "database type")
 	createTableSql string
 )
 
@@ -28,7 +27,8 @@ type User struct {
 }
 
 func init() {
-	switch dbtype {
+	flag.Parse()
+	switch *dbtype {
 	case "sqlite3":
 		createTableSql = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NULL, " +
 			"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
@@ -41,7 +41,7 @@ func init() {
 }
 
 func testOpen() (*DB, error) {
-	switch dbtype {
+	switch *dbtype {
 	case "sqlite3":
 		os.Remove("./test.db")
 		return Open("sqlite3", "./test.db")
@@ -133,7 +133,7 @@ func BenchmarkStructQuery(b *testing.B) {
 				b.Error(err)
 			}
 			if user.Name != "xlw" {
-				fmt.Println(user)
+				b.Log(user)
 				b.Error(errors.New("name should be xlw"))
 			}
 		}
@@ -179,7 +179,7 @@ func BenchmarkStruct2Query(b *testing.B) {
 				b.Error(err)
 			}
 			if user.Name != "xlw" {
-				fmt.Println(user)
+				b.Log(user)
 				b.Error(errors.New("name should be xlw"))
 			}
 		}
@@ -228,9 +228,8 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 			if err != nil {
 				b.Error(err)
 			}
-			fmt.Println(slice)
+			b.Log(slice)
 			if *slice[1].(*string) != "xlw" {
-				fmt.Println(slice)
 				b.Error(errors.New("name should be xlw"))
 			}
 		}
@@ -332,7 +331,7 @@ func BenchmarkSliceStringQuery(b *testing.B) {
 				b.Error(err)
 			}
 			if (*slice[1]) != "xlw" {
-				fmt.Println(slice)
+				b.Log(slice)
 				b.Error(errors.New("name should be xlw"))
 			}
 		}
@@ -378,7 +377,7 @@ func BenchmarkMapInterfaceQuery(b *testing.B) {
 				b.Error(err)
 			}
 			if m["name"].(string) != "xlw" {
-				fmt.Println(m)
+				b.Log(m)
 				b.Error(errors.New("name should be xlw"))
 			}
 		}
@@ -579,7 +578,7 @@ func TestExecMap(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		fmt.Println("--", user)
+		t.Log("--", user)
 	}
 }
 
@@ -621,7 +620,7 @@ func TestExecStruct(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		fmt.Println("1--", user)
+		t.Log("1--", user)
 	}
 }
 

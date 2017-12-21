@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -12,14 +11,14 @@ func TestPK(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(str)
+	t.Log(str)
 
 	s := &PK{}
 	err = s.FromString(str)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(s)
+	t.Log(s)
 
 	if len(*p) != len(*s) {
 		t.Fatal("p", *p, "should be equal", *s)
