@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -58,7 +59,7 @@ func encodeIds(ids []PK) (string, error) {
 func decodeIds(s string) ([]PK, error) {
 	pks := make([]PK, 0)
 
-	dec := gob.NewDecoder(bytes.NewBufferString(s))
+	dec := gob.NewDecoder(strings.NewReader(s))
 	err := dec.Decode(&pks)
 
 	return pks, err
