@@ -233,8 +233,15 @@ func BenchmarkSliceInterfaceQuery(b *testing.B) {
 				b.Error(err)
 			}
 			b.Log(slice)
-			if *slice[1].(*string) != "xlw" {
-				b.Error(errors.New("name should be xlw"))
+			switch slice[1].(type) {
+			case *string:
+				if *slice[1].(*string) != "xlw" {
+					b.Error(errors.New("name should be xlw"))
+				}
+			case []byte:
+				if string(slice[1].([]byte)) != "xlw" {
+					b.Error(errors.New("name should be xlw"))
+				}
 			}
 		}
 
@@ -380,9 +387,17 @@ func BenchmarkMapInterfaceQuery(b *testing.B) {
 			if err != nil {
 				b.Error(err)
 			}
-			if m["name"].(string) != "xlw" {
-				b.Log(m)
-				b.Error(errors.New("name should be xlw"))
+			switch m["name"].(type) {
+			case string:
+				if m["name"].(string) != "xlw" {
+					b.Log(m)
+					b.Error(errors.New("name should be xlw"))
+				}
+			case []byte:
+				if string(m["name"].([]byte)) != "xlw" {
+					b.Log(m)
+					b.Error(errors.New("name should be xlw"))
+				}
 			}
 		}
 
