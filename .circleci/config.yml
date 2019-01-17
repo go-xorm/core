@@ -31,7 +31,7 @@ jobs:
       - checkout
 
           # specify any bash command here prefixed with `run: `
-      - run: mysql -u root -e "CREATE DATABASE core_test DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
+      #- run: mysql -u root -e "CREATE DATABASE core_test DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
       - run: go get -u github.com/golang/lint/golint
       - run: go get -u github.com/wadey/gocovmerge
       - run: golint ./...
