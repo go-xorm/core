@@ -5,6 +5,7 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
@@ -73,30 +74,45 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 
 // String generate column description string according dialect
 func (col *Column) String(d Dialect) string {
-	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
+	var b bytes.Buffer
+	fmt.Fprint(&b, d.QuoteStr())
+	fmt.Fprint(&b, col.Name)
+	fmt.Fprint(&b, d.QuoteStr(), " ")
 
-	sql += d.SqlType(col) + " "
+	sqlType := d.SqlType(col)
+	fmt.Fprint(&b, sqlType, " ")
 
 	if col.IsPrimaryKey {
-		sql += "PRIMARY KEY "
+		fmt.Fprint(&b, "PRIMARY KEY ")
+
 		if col.IsAutoIncrement {
-			sql += d.AutoIncrStr() + " "
+			fmt.Fprint(&b, d.AutoIncrStr(), " ")
 		}
 	}
 
 	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
+		fmt.Fprint(&b, "DEFAULT ")
+		if strings.EqualFold(sqlType, "BOOL") {
+			if strings.EqualFold(col.Default, "FALSE") || col.Default == "0" {
+				fmt.Fprint(&b, "FALSE")
+			} else {
+				fmt.Fprint(&b, "TRUE")
+			}
+		} else {
+			fmt.Fprint(&b, col.Default)
+		}
+		fmt.Fprint(&b, " ")
 	}
 
 	if d.ShowCreateNull() {
 		if col.Nullable {
-			sql += "NULL "
+			fmt.Fprint(&b, "NULL ")
 		} else {
-			sql += "NOT NULL "
+			fmt.Fprint(&b, "NOT NULL ")
 		}
 	}
 
-	return sql
+	return b.String()
 }
 
 // StringNoPk generate column description string according dialect without primary keys
